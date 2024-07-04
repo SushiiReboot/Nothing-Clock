@@ -128,7 +128,7 @@ export default function ClockScreen() {
           paddingBottom: 100,
         }}
         onScroll={handleScroll}
-        onScrollEndDrag={onScrollEndDrag} // Add onScrollEndDrag event
+        onMomentumScrollEnd={onScrollEndDrag} // Add onScrollEndDrag event
         onScrollBeginDrag={setInitalDragPosition}
         scrollEventThrottle={16}
       >
