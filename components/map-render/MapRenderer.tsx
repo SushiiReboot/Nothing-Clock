@@ -1,47 +1,84 @@
 import React from 'react';
 import DottedMap from 'dotted-map/without-countries';
 import ComputedDottedMap from "./data/map_dotted.json"
-import GeoData from "./data/countries.geo.json"
+import GeoData from "./data/countries.json"
+import CountryCoords from "./data/countries.geo.json"
 import { StyleSheet, View, Animated, StyleProp, ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
 interface MapRendererProps {
     style: StyleProp<ViewStyle>
+    pins: string[]
 }
 
-function findCoordinatesByCountry(countryName: string, geoJson: any): number[] | null {
-    for (const data of geoJson.ref_country_codes) {
-      if (data.country === countryName) {
-        let coords : number[] = [];
-        coords[0] = data.latitude;
-        coords[1] = data.longitude;
-        return coords;
-      }
-    }
-    return null; // Return null if country is not found
-}
-
-function getCityCoords(cityName: string): number[] | null {
+function findCoordinates(pin: string | null): number[] | null {
     const jsonGeo = JSON.stringify(GeoData);
     const geoData = JSON.parse(jsonGeo);
 
-    const coords = findCoordinatesByCountry(cityName, geoData);
-    return coords;
-};
+    console.log(geoData.ref_country_codes);
+
+    if(pin == null) {
+        return null;
+    }
+
+    const countryData = parseJsonGeoData(pin, geoData);
+
+    if(countryData == null) {
+        const countryByCity = findCountryByCityName(pin);
+        return parseJsonGeoData(countryByCity, geoData);
+    }
+
+    return countryData;
+}
+
+function parseJsonGeoData(country: string | null, geoJson: any): number[] | null {
+    if (!geoJson || !CountryCoords.ref_country_codes) {
+        console.error("GeoJson is undefined");
+        return null; // Ensure geoJson and ref_country_codes are defined
+    }
+
+    for (const data of CountryCoords.ref_country_codes) {
+        if (data.country === country) {
+            let coords: number[] = [];
+            coords[0] = data.latitude;
+            coords[1] = data.longitude;
+            return coords;
+        }
+    }
+
+    return null;
+}
+
+function findCountryByCityName(cityName: string): string | null {
+    const geoData = GeoData as { [key: string]: string[] };
+    for (const country in geoData) {
+        if (geoData.hasOwnProperty(country) && geoData[country].includes(cityName))
+            return country;
+    }
+
+    return null;
+}
 
 const MapRenderer: React.FC<MapRendererProps> = (props) => { //52X29 map
+    if (!ComputedDottedMap) {
+        // Handle the case where ComputedDottedMap is undefined
+        console.error("ComputedDottedMap is undefined");
+        return null; // Or some other error handling
+    }
+
     const computedData = JSON.stringify(ComputedDottedMap);
     const map = new DottedMap({ map: JSON.parse(computedData) });
 
-    const coordsPin = getCityCoords("Italy");
-    if(coordsPin == null)
-        return;
-
-    map.addPin({
-        lat: coordsPin[0],
-        lng: coordsPin[1],
-        svgOptions: { color: 'red', radius: 0.4 },
-    });
+    for (const pin of props.pins) {
+        const coords = findCoordinates(pin);
+        if (coords != null) {
+            map.addPin({
+                lat: coords[0],
+                lng: coords[1],
+                svgOptions: { color: 'red', radius: 0.4 },
+            });
+        }
+    }
 
     const svgMap = map.getSVG({
         radius: 0.4,

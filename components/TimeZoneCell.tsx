@@ -1,6 +1,6 @@
 import { Entypo } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native'; 
+import { StyleSheet, View, Text, Pressable } from 'react-native'; 
 
 interface TimeZoneCellProps {
     timeZone: string;
@@ -9,13 +9,16 @@ interface TimeZoneCellProps {
 
 const TimeZoneCell: React.FC<TimeZoneCellProps> = ({ name, timeZone = "null" }) => {
     return (
-        <View style={styles.mainContainer}>
+        <Pressable 
+            style={styles.mainContainer}
+            onPress={() => alert("Pressed timezone!")}
+        >
             <View style={styles.header}>
                 <Entypo name="dot-single" size={30} color="red" />
                 <Text style={[styles.text, styles.headerText]}>{name}</Text>
             </View>
             <Text style={[styles.text, styles.clockText]}>{timeZone}</Text>
-        </View>
+        </Pressable>
     );
 };
 

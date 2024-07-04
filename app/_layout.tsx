@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
 import { Stack, Tabs } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text } from "react-native";
 
 export default function RootLayout() {
