@@ -3,7 +3,7 @@ import DottedMap from 'dotted-map/without-countries';
 import ComputedDottedMap from "./data/map_dotted.json"
 import GeoData from "./data/countries.json"
 import CountryCoords from "./data/countries.geo.json"
-import { StyleSheet, View, Animated, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, Animated, StyleProp, ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
 interface MapRendererProps {

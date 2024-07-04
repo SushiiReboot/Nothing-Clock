@@ -1,10 +1,8 @@
 import TimeZoneCell from "@/components/TimeZoneCell";
 import MapRenderer from "@/components/map-render/MapRenderer";
-import { transform } from "@babel/core";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useRef } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View, ScrollView, Animated, Easing } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View, ScrollView, Animated } from "react-native";
 
 const data_test = [
   {
