@@ -10,7 +10,6 @@ export default function StopWatchScreen() {
 
 const styles = StyleSheet.create({
   mainContainer: {
-    backgroundColor: "#0a0a0a",
     flex: 1
   }
 });

@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFonts } from "expo-font";
-import { Stack, Tabs } from "expo-router";
+import { Tabs } from "expo-router";
 import { StyleSheet, Text } from "react-native";
 
 export default function TabLayout() {
   return (
     <Tabs
+      initialRouteName="clock"
       screenOptions={{
         headerStyle: {
           backgroundColor: "#0a0a0a",
@@ -35,7 +35,16 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen 
-        name="index"
+        redirect
+        name="index" 
+        options={{
+          headerTitle: (props: any) => <Text {...props} style={styles.text}>Timer</Text>,
+          tabBarShowLabel: false,
+          tabBarButton: () => null
+        }}
+      />
+      <Tabs.Screen 
+        name="clock"
         options={{
           headerTitle: (props: any) => <Text {...props} style={styles.text}>Clock</Text>,
           tabBarLabel: "Clock"
