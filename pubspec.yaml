@@ -34,6 +34,7 @@ dependencies:
   flutter_displaymode: ^0.6.0
   flutter_svg: ^2.0.10+1
   font_awesome_flutter: ^10.7.0
+  intl: ^0.19.0
 
 dev_dependencies:
 

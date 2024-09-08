@@ -6,6 +6,7 @@ import 'package:nothing_clock/widgets/info_display_clock.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/top_bar.dart';
 import 'package:nothing_clock/widgets/world_map.dart';
+import 'package:intl/intl.dart';
 
 class ClockPage extends StatefulWidget {
   const ClockPage({super.key});
@@ -20,6 +21,8 @@ class _ClockPageState extends State<ClockPage> {
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
+    DateTime now = DateTime.now();
+    String formattedDate = DateFormat("EEE, MMM dd").format(now);
 
     return Scaffold(
       bottomNavigationBar: BottomBar(theme: theme),
@@ -43,7 +46,7 @@ class _ClockPageState extends State<ClockPage> {
                   InfoDisplayClock(
                     foregroundColor: Colors.white,
                     color: theme.colorScheme.tertiary,
-                    text: "Sun, jul 23",
+                    text: formattedDate,
                   ),
                   const SizedBox(
                     width: 10,
