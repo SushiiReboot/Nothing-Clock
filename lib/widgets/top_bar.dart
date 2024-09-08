@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class TopBar extends StatelessWidget implements PreferredSizeWidget {
-  const TopBar({super.key, required this.title});
+  const TopBar({super.key, required this.title, this.scaffoldKey});
 
   final String title;
+  final GlobalKey<ScaffoldState>? scaffoldKey;
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +14,10 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
         backgroundColor: Theme.of(context).colorScheme.surface,
         actions: [
           IconButton(
-              icon: const Icon(Icons.settings_outlined), onPressed: () {}),
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () {
+                scaffoldKey?.currentState?.openEndDrawer();
+              }),
         ],
         leading: IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
         title: Text(

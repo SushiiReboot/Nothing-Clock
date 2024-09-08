@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:nothing_clock/widgets/bottom_bar.dart';
+import 'package:nothing_clock/widgets/drawer_popup.dart';
 import 'package:nothing_clock/widgets/info_display_clock.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/top_bar.dart';
@@ -13,13 +15,19 @@ class ClockPage extends StatefulWidget {
 }
 
 class _ClockPageState extends State<ClockPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
     return Scaffold(
       bottomNavigationBar: BottomBar(theme: theme),
-      appBar: const TopBar(title: "Clock"),
+      appBar: TopBar(title: "Clock", scaffoldKey: _scaffoldKey),
+      key: _scaffoldKey,
+      endDrawer: const DrawerPopup(),
+      floatingActionButton: _buildAddMoreBtn(theme),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: SafeArea(
           child: Padding(
         padding: const EdgeInsets.all(20),
@@ -73,41 +81,23 @@ class _ClockPageState extends State<ClockPage> {
       )),
     );
   }
-}
 
-class BottomBar extends StatefulWidget {
-  const BottomBar({
-    super.key,
-    required this.theme,
-  });
-
-  final ThemeData theme;
-
-  @override
-  State<BottomBar> createState() => _BottomBarState();
-}
-
-class _BottomBarState extends State<BottomBar> {
-  int _selectedIndex = 0;
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      backgroundColor: widget.theme.colorScheme.surface,
-      unselectedItemColor: Colors.grey,
-      selectedItemColor: Colors.red,
-      currentIndex: _selectedIndex,
-      onTap: (index) {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      showUnselectedLabels: true, // Show unselected labels as well
-      items: const [
-        BottomNavigationBarItem(icon: SizedBox.shrink(), label: "ALARMS"),
-        BottomNavigationBarItem(icon: SizedBox.shrink(), label: "CLOCK"),
-        BottomNavigationBarItem(icon: SizedBox.shrink(), label: "TIMER"),
-        BottomNavigationBarItem(icon: SizedBox.shrink(), label: "STOPWATCH"),
-      ],
+  Padding _buildAddMoreBtn(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15.0),
+      child: InkWell(
+        onTap: () {},
+        child: Container(
+          decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(50)),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+          child: const Text(
+            "ADD MORE",
+            style: TextStyle(letterSpacing: 1.5),
+          ),
+        ),
+      ),
     );
   }
 }
