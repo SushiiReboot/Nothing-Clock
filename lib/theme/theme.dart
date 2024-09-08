@@ -6,7 +6,8 @@ class AppTheme {
       primaryColor: Colors.deepPurple,
       textTheme: const TextTheme(
           labelLarge: TextStyle(
-              fontFamily: "Roboto", fontSize: 15, fontWeight: FontWeight.w400)),
+              fontFamily: "Roboto", fontSize: 15, fontWeight: FontWeight.w400),
+          titleLarge: TextStyle(fontFamily: "NDot", fontSize: 25)),
       colorScheme: const ColorScheme.dark(
           surface: Colors.black,
           onSurface: Colors.white,

@@ -75,5 +75,9 @@ flutter:
           weight: 100
         - asset: lib/fonts/Roboto-Regular.ttf
           weight: 400
+    - family: NDot
+      fonts:
+        - asset: lib/fonts/NDot.ttf
+          weight: 400
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

@@ -4,9 +4,11 @@ class TimeZoneClock extends StatelessWidget {
   const TimeZoneClock({
     super.key,
     required this.cityName,
+    required this.time,
   });
 
   final String cityName;
+  final String time;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,8 @@ class TimeZoneClock extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(25.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -33,6 +37,10 @@ class TimeZoneClock extends StatelessWidget {
                 ),
                 Text(cityName.toUpperCase())
               ],
+            ),
+            Text(
+              time,
+              style: theme.textTheme.titleLarge,
             )
           ],
         ),
