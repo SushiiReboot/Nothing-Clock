@@ -12,7 +12,7 @@ class AppTheme {
           surface: Colors.black,
           onSurface: Colors.white,
           primary: Color.fromARGB(255, 255, 26, 26),
-          secondary: Color.fromARGB(215, 217, 216, 255),
+          secondary: Color.fromARGB(255, 233, 233, 250),
           tertiary: Color(0xFF1D1E20),
           onPrimary: Colors.white,
           onSecondary: Colors.black,

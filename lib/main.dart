@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:nothing_clock/screens/clock_page.dart';
+import 'package:nothing_clock/screens/router.dart' as RouterPage;
 import 'package:nothing_clock/theme/theme.dart';
 
 void main() async {
@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      home: const ClockPage(),
+      home: const RouterPage.Router(),
     );
   }
 }

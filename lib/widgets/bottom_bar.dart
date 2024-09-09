@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:nothing_clock/screens/alarms_screen.dart';
+import 'package:nothing_clock/screens/router.dart';
 
 class BottomBar extends StatefulWidget {
   const BottomBar({
     super.key,
     required this.theme,
+    required this.callback,
   });
 
   final ThemeData theme;
+  final Function(int) callback;
 
   @override
   State<BottomBar> createState() => _BottomBarState();
@@ -14,6 +18,7 @@ class BottomBar extends StatefulWidget {
 
 class _BottomBarState extends State<BottomBar> {
   int _selectedIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
@@ -24,6 +29,7 @@ class _BottomBarState extends State<BottomBar> {
       onTap: (index) {
         setState(() {
           _selectedIndex = index;
+          widget.callback(_selectedIndex);
         });
       },
       showUnselectedLabels: true, // Show unselected labels as well
