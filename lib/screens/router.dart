@@ -50,27 +50,6 @@ class _RouterState extends State<Router> {
             title: _topBarTitles[_selectedIndex], scaffoldKey: _scaffoldKey),
         key: _scaffoldKey,
         endDrawer: const DrawerPopup(),
-        floatingActionButton: _buildAddMoreBtn(theme),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         body: _screens.elementAt(_selectedIndex));
-  }
-
-  Padding _buildAddMoreBtn(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0),
-      child: InkWell(
-        onTap: () {},
-        child: Container(
-          decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(50)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-          child: const Text(
-            "ADD MORE",
-            style: TextStyle(letterSpacing: 1.5),
-          ),
-        ),
-      ),
-    );
   }
 }
