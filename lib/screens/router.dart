@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nothing_clock/screens/alarms_screen.dart';
 import 'package:nothing_clock/screens/clock_screen.dart';
+import 'package:nothing_clock/screens/stopwatch_screen.dart';
 import 'package:nothing_clock/widgets/drawer_popup.dart';
 import 'package:nothing_clock/widgets/top_bar.dart';
 
@@ -18,16 +19,14 @@ class _RouterState extends State<Router> {
     ClockScreen(),
     AlarmsScreen(),
     Placeholder(),
-    Placeholder(),
+    StopwatchScreen(),
   ];
 
   int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    ThemeData theme = Theme.of(context);
-
-    void _onNavBarTap(index) {
+    void onNavBarTap(index) {
       setState(() {
         _selectedIndex = index;
       });
@@ -35,7 +34,8 @@ class _RouterState extends State<Router> {
 
     return Scaffold(
         appBar: TopBar(
-          callback: (index) => _onNavBarTap(index),
+          callback: (index) => onNavBarTap(index),
+          scaffoldKey: _scaffoldKey,
         ),
         key: _scaffoldKey,
         endDrawer: const DrawerPopup(),

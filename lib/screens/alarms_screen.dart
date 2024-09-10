@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nothing_clock/screens/switch_button.dart';
+import 'package:nothing_clock/widgets/switch_button.dart';
 
 class AlarmsScreen extends StatelessWidget {
   const AlarmsScreen({super.key});
@@ -7,6 +7,8 @@ class AlarmsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
+
+    double alarmBlockSize = (MediaQuery.of(context).size.width - 40 - 10) / 2;
 
     return Scaffold(
       body: SafeArea(
@@ -39,12 +41,14 @@ class AlarmsScreen extends StatelessWidget {
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: 2,
                             itemBuilder: (context, index) {
-                              return _buildAlarmBlock(theme);
+                              return _buildAlarmBlock(
+                                  theme, index, alarmBlockSize);
                             })),
                     InkWell(
                       onTap: () {},
                       child: Container(
-                        height: 200,
+                        height: alarmBlockSize,
+                        width: alarmBlockSize,
                         decoration: BoxDecoration(
                             color: Colors.transparent,
                             border: Border.all(
@@ -56,11 +60,6 @@ class AlarmsScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.add, color: Colors.white),
-                            SizedBox(width: 20),
-                            Text(
-                              "ADD MORE",
-                              style: TextStyle(letterSpacing: 1.5),
-                            ),
                           ],
                         ),
                       ),
@@ -75,34 +74,39 @@ class AlarmsScreen extends StatelessWidget {
     );
   }
 
-  Container _buildAlarmBlock(ThemeData theme) {
+  Container _buildAlarmBlock(
+      ThemeData theme, int index, double alarmBlockSize) {
+    List<String> _testAlarmClocks = ["08:15", "09:15"];
+    List<String> _testAlarmDays = ["MON, TUE", "MON, TUE, WED"];
+
     return Container(
       width: 200,
       height: 200,
       decoration: BoxDecoration(
           color: theme.colorScheme.tertiary,
           borderRadius: BorderRadius.circular(10)),
-      child: Row(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 25.0, left: 25.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  "08:15",
-                  style:
-                      theme.textTheme.titleLarge?.copyWith(color: Colors.white),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                const Text("MON, TUE")
-              ],
-            ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Stack(children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _testAlarmClocks[index],
+                style:
+                    theme.textTheme.titleLarge?.copyWith(color: Colors.white),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              Text(_testAlarmDays[index]),
+            ],
           ),
-          const SwitchButtonBlock()
-        ],
+          Positioned(
+              top: alarmBlockSize - 80,
+              left: 75,
+              child: const SwitchButtonBlock())
+        ]),
       ),
     );
   }

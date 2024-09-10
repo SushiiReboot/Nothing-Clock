@@ -39,9 +39,14 @@ class _ClockScreenState extends State<ClockScreen> {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat("EEE, MMM dd").format(now);
 
+    double cellPadding = 10;
+    double clockContainerSize =
+        (MediaQuery.of(context).size.width - 40 - cellPadding) / 2;
+
+    const List<String> testCitiesNames = ["Italy", "New York", "Tokyo"];
+    const List<String> testCitiesClocks = ["12:21", "06:21", "20:21"];
+
     return Scaffold(
-      floatingActionButton: _buildAddMoreBtn(theme),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: SafeArea(
           child: Padding(
         padding: const EdgeInsets.all(20),
@@ -89,7 +94,7 @@ class _ClockScreenState extends State<ClockScreen> {
                 height: 20,
               ),
               SizedBox(
-                  height: 1200,
+                  height: clockContainerSize * 2 + 120,
                   child: GridView.builder(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
@@ -97,11 +102,11 @@ class _ClockScreenState extends State<ClockScreen> {
                               crossAxisSpacing: 10,
                               mainAxisSpacing: 10),
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 12,
+                      itemCount: 3,
                       itemBuilder: (context, index) {
-                        return const TimeZoneClock(
-                          time: "12:21",
-                          cityName: "Italy",
+                        return TimeZoneClock(
+                          time: testCitiesClocks[index],
+                          cityName: testCitiesNames[index],
                         );
                       }))
             ],
@@ -113,25 +118,6 @@ class _ClockScreenState extends State<ClockScreen> {
 
   String _formatDateTime(DateTime dateTime) {
     return DateFormat('H:mm').format(dateTime);
-  }
-
-  Padding _buildAddMoreBtn(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0),
-      child: InkWell(
-        onTap: () {},
-        child: Container(
-          decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(50)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-          child: const Text(
-            "ADD MORE",
-            style: TextStyle(letterSpacing: 1.5),
-          ),
-        ),
-      ),
-    );
   }
 
   void _getTime() {

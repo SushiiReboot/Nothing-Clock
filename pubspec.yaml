@@ -29,6 +29,7 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   cupertino_icons: ^1.0.8
+  dotted_border: ^2.1.0
   flutter:
     sdk: flutter
   flutter_displaymode: ^0.6.0

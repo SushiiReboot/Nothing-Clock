@@ -35,12 +35,15 @@ class TimeZoneClock extends StatelessWidget {
                 const SizedBox(
                   width: 10,
                 ),
-                Text(cityName.toUpperCase())
+                Text(
+                  cityName.toUpperCase(),
+                  style: const TextStyle(fontSize: 16),
+                )
               ],
             ),
             Text(
               time,
-              style: theme.textTheme.titleLarge,
+              style: theme.textTheme.titleLarge?.copyWith(fontSize: 33),
             )
           ],
         ),

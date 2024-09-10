@@ -7,7 +7,12 @@ class WorldMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Offset mapCoords =
+    Offset sicilyCoords =
+        DotMapConverter.convertCoordsToMapCoords(38.116669, 13.366667);
+
+    Offset tokyoCoords =
+        DotMapConverter.convertCoordsToMapCoords(35.6895, 139.6917);
+    Offset newYorkCoords =
         DotMapConverter.convertCoordsToMapCoords(40.7128, -74.0060);
 
     return Stack(
@@ -23,7 +28,12 @@ class WorldMap extends StatelessWidget {
             ),
           ),
         ),
-        _addDotToMap(mapCoords.dx - 1, mapCoords.dy - 2)
+        _addDotToMap(sicilyCoords.dx - 1, sicilyCoords.dy - 2, true, Colors.red,
+            Colors.white),
+        _addDotToMap(tokyoCoords.dx - 1, tokyoCoords.dy - 2, false, Colors.red,
+            Colors.white),
+        _addDotToMap(newYorkCoords.dx - 1, newYorkCoords.dy - 2, false,
+            Colors.red, Colors.white),
       ],
     );
   }
@@ -31,7 +41,8 @@ class WorldMap extends StatelessWidget {
   // You can use the rest of your original code here
 }
 
-Positioned _addDotToMap(double xCoord, double yCoord) {
+Positioned _addDotToMap(double xCoord, double yCoord, bool isCurrentLocation,
+    Color currentLocationColor, Color otherLocationColor) {
   // Here you convert your map coordinates to pixel coordinates
   // For a 62x28 map, the logic for converting coordinates could vary depending on how the map is scaled
   // The provided code adds a dot by positioning it on the map at (xCoord, yCoord)
@@ -43,11 +54,11 @@ Positioned _addDotToMap(double xCoord, double yCoord) {
     left: xCoord * 6,
     top: yCoord * 6,
     child: Container(
-      width: 12,
-      height: 12,
-      decoration: const BoxDecoration(
+      width: isCurrentLocation ? 12 : 8,
+      height: isCurrentLocation ? 12 : 8,
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.red,
+        color: isCurrentLocation ? currentLocationColor : otherLocationColor,
       ),
     ),
   );
