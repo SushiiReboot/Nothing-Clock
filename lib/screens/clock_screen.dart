@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -6,8 +8,30 @@ import 'package:nothing_clock/widgets/world_map.dart';
 
 import '../widgets/info_display_clock.dart';
 
-class ClockScreen extends StatelessWidget {
+class ClockScreen extends StatefulWidget {
   const ClockScreen({super.key});
+
+  @override
+  State<ClockScreen> createState() => _ClockScreenState();
+}
+
+class _ClockScreenState extends State<ClockScreen> {
+  late String _timeString;
+  late Timer _timer;
+
+  @override
+  void initState() {
+    _timeString = _formatDateTime(DateTime.now());
+    _timer =
+        Timer.periodic(const Duration(seconds: 1), (Timer t) => _getTime());
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +48,21 @@ class ClockScreen extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              Column(
+                children: [
+                  Text(
+                    _timeString,
+                    style: theme.textTheme.titleLarge?.copyWith(fontSize: 72),
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Text("Sicily, Italy | GMT +1".toUpperCase())
+                ],
+              ),
+              const SizedBox(
+                height: 20,
+              ),
               const WorldMap(),
               const SizedBox(
                 height: 20,
@@ -72,6 +111,10 @@ class ClockScreen extends StatelessWidget {
     );
   }
 
+  String _formatDateTime(DateTime dateTime) {
+    return DateFormat('H:mm').format(dateTime);
+  }
+
   Padding _buildAddMoreBtn(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
@@ -89,5 +132,13 @@ class ClockScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _getTime() {
+    final DateTime now = DateTime.now();
+    final String formattedTime = _formatDateTime(now);
+    setState(() {
+      _timeString = formattedTime;
+    });
   }
 }

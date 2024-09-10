@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nothing_clock/screens/alarms_screen.dart';
 import 'package:nothing_clock/screens/clock_screen.dart';
-import 'package:nothing_clock/widgets/bottom_bar.dart';
 import 'package:nothing_clock/widgets/drawer_popup.dart';
 import 'package:nothing_clock/widgets/top_bar.dart';
 
@@ -22,13 +21,6 @@ class _RouterState extends State<Router> {
     Placeholder(),
   ];
 
-  static const List<String> _topBarTitles = [
-    "Clock",
-    "Alarms",
-    "Timer",
-    "Stopwatch",
-  ];
-
   int _selectedIndex = 0;
 
   @override
@@ -42,12 +34,9 @@ class _RouterState extends State<Router> {
     }
 
     return Scaffold(
-        bottomNavigationBar: BottomBar(
-          theme: theme,
+        appBar: TopBar(
           callback: (index) => _onNavBarTap(index),
         ),
-        appBar: TopBar(
-            title: _topBarTitles[_selectedIndex], scaffoldKey: _scaffoldKey),
         key: _scaffoldKey,
         endDrawer: const DrawerPopup(),
         body: _screens.elementAt(_selectedIndex));
