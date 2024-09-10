@@ -14,6 +14,7 @@ class Router extends StatefulWidget {
 
 class _RouterState extends State<Router> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final PageController _pageController = PageController();
 
   static const List<Widget> _screens = [
     ClockScreen(),
@@ -26,19 +27,40 @@ class _RouterState extends State<Router> {
 
   @override
   Widget build(BuildContext context) {
-    void onNavBarTap(index) {
+    void onNavBarTap(int index) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _selectedIndex = index;
+        });
+
+        print("calll $index");
+
+        _pageController.animateToPage(index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.fastOutSlowIn);
+      });
+    }
+
+    void onPageScroll(int index) {
       setState(() {
         _selectedIndex = index;
       });
+
+      print("scorll $index");
     }
 
     return Scaffold(
         appBar: TopBar(
           callback: (index) => onNavBarTap(index),
           scaffoldKey: _scaffoldKey,
+          selectedIndex: _selectedIndex,
         ),
         key: _scaffoldKey,
         endDrawer: const DrawerPopup(),
-        body: _screens.elementAt(_selectedIndex));
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: (index) => onPageScroll(index),
+          children: _screens,
+        ));
   }
 }

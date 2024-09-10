@@ -4,7 +4,13 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState>? scaffoldKey;
   final Function(int) callback;
 
-  const TopBar({super.key, this.scaffoldKey, required this.callback});
+  const TopBar(
+      {super.key,
+      this.scaffoldKey,
+      required this.callback,
+      required this.selectedIndex});
+
+  final int selectedIndex;
 
   @override
   // ignore: library_private_types_in_public_api
@@ -16,18 +22,24 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
-      setState(() {
-        _selectedIndex = _tabController.index;
-        widget.callback(_selectedIndex);
-      });
+      if (widget.selectedIndex != _tabController.index) {
+        widget.callback(_tabController.index);
+      }
     });
+  }
+
+  @override
+  void didUpdateWidget(TopBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedIndex != _tabController.index) {
+      _tabController.index = widget.selectedIndex;
+    }
   }
 
   @override
@@ -39,6 +51,8 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
+
+    _tabController.index = widget.selectedIndex;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15.0),
@@ -54,6 +68,11 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
         ],
         leading: IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
         title: TabBar(
+          onTap: (value) {
+            setState(() {
+              widget.callback(value);
+            });
+          },
           controller: _tabController,
           isScrollable: true,
           labelColor: Colors.red,
