@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:nothing_clock/providers/location_provider.dart';
-import 'package:nothing_clock/providers/timer_provider.dart';
-import 'package:nothing_clock/services/time_country.dart';
+import 'package:nothing_clock/providers/page_provider.dart';
+import 'package:nothing_clock/widgets/clock_screen/current_time_text.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/world_map.dart';
 import 'package:provider/provider.dart';
@@ -32,6 +32,7 @@ class _ClockScreenState extends State<ClockScreen> {
         (MediaQuery.of(context).size.width - 40 - cellPadding) / 2;
 
     const List<String> testCitiesNames = ["Italy", "Japan"];
+    final pageProvider = Provider.of<PageProvider>(context);
 
     return Scaffold(
       body: SafeArea(
@@ -63,6 +64,10 @@ class _ClockScreenState extends State<ClockScreen> {
                     foregroundColor: Colors.black,
                     text: "1 alarm",
                     icon: FontAwesomeIcons.chevronRight,
+                    onTap: () {
+                      print("Go to alarms");
+                      pageProvider.setPage(1);
+                    },
                   )
                 ],
               ),
@@ -151,49 +156,5 @@ class _LocationInfoState extends State<LocationInfo> {
         }),
       ],
     );
-  }
-}
-
-class CurrentTimeText extends StatefulWidget {
-  const CurrentTimeText({
-    super.key,
-  });
-
-  @override
-  State<CurrentTimeText> createState() => _CurrentTimeTextState();
-}
-
-class _CurrentTimeTextState extends State<CurrentTimeText> {
-  String _timeString = "00:00";
-
-  String _formatDateTime(DateTime dateTime) {
-    return DateFormat('H:mm').format(dateTime);
-  }
-
-  void _updateTime() {
-    final DateTime now = DateTime.now();
-    final String formattedTime = _formatDateTime(now);
-
-    // Only update if the time actually changed
-    if (_timeString != formattedTime) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          _timeString = formattedTime;
-        });
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ThemeData theme = Theme.of(context);
-
-    return Consumer<TimerProvider>(builder: (context, timer, _) {
-      _updateTime();
-      return Text(
-        _timeString,
-        style: theme.textTheme.titleLarge?.copyWith(fontSize: 72),
-      );
-    });
   }
 }

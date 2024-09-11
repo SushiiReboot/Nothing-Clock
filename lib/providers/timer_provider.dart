@@ -4,15 +4,24 @@ import 'package:flutter/material.dart';
 
 class TimerProvider with ChangeNotifier {
   Timer? _timer;
+  DateTime _previousTime = DateTime.now();
 
   TimerProvider() {
-    _startTimer();
+    startTimer();
   }
 
-  void _startTimer() {
+  void startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
-      notifyListeners();
+      final DateTime currentTime = DateTime.now();
+      if(currentTime.minute != _previousTime.minute) {
+        _previousTime = currentTime;
+        notifyListeners();
+      }
     });
+  }
+
+  void disposeTimer() {
+    _timer?.cancel();
   }
 
   @override

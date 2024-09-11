@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:nothing_clock/providers/timer_provider.dart';
 import 'package:nothing_clock/screens/alarms_screen.dart';
 import 'package:nothing_clock/screens/clock_screen.dart';
 import 'package:nothing_clock/screens/stopwatch_screen.dart';
 import 'package:nothing_clock/widgets/drawer_popup.dart';
 import 'package:nothing_clock/widgets/top_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:nothing_clock/providers/page_provider.dart'; // Import PageProvider
 
 class Router extends StatefulWidget {
   const Router({super.key});
@@ -14,7 +17,7 @@ class Router extends StatefulWidget {
 
 class _RouterState extends State<Router> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final PageController _pageController = PageController();
+  final PageController _pageController = PageController(); // PageController
 
   static const List<Widget> _screens = [
     ClockScreen(),
@@ -23,40 +26,49 @@ class _RouterState extends State<Router> {
     StopwatchScreen(),
   ];
 
-  int _selectedIndex = 0;
-
   @override
   Widget build(BuildContext context) {
-    void onNavBarTap(int index) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          _selectedIndex = index;
-        });
-
-        _pageController.animateToPage(index,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.fastOutSlowIn);
-      });
-    }
-
-    void onPageScroll(int index) {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-
     return Scaffold(
-        appBar: TopBar(
-          callback: (index) => onNavBarTap(index),
-          scaffoldKey: _scaffoldKey,
-          selectedIndex: _selectedIndex,
-        ),
-        key: _scaffoldKey,
-        endDrawer: const DrawerPopup(),
-        body: PageView(
-          controller: _pageController,
-          onPageChanged: (index) => onPageScroll(index),
-          children: _screens,
-        ));
+      appBar: TopBar(
+        callback: (index) =>
+            Provider.of<PageProvider>(context, listen: false).setPage(index),
+        scaffoldKey: _scaffoldKey,
+        selectedIndex: Provider.of<PageProvider>(context).selectedIndex,
+      ),
+      key: _scaffoldKey,
+      endDrawer: const DrawerPopup(),
+
+      // Use Consumer to rebuild the PageView when the page index changes
+      body: Consumer<PageProvider>(
+        builder: (context, pageProvider, child) {
+          // Delay the animation to ensure the widget is fully built and ready
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              if (pageProvider.selectedIndex != 0) {
+                Provider.of<TimerProvider>(context, listen: false)
+                    .disposeTimer();
+              } else {
+                Provider.of<TimerProvider>(context, listen: false).startTimer();
+              }
+
+              _pageController.animateToPage(
+                pageProvider.selectedIndex,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.linear,
+              );
+            }
+          });
+
+          return PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              // Update the provider when the user swipes to a new page
+              pageProvider.setPage(index);
+            },
+            children: _screens,
+          );
+        },
+      ),
+    );
   }
 }

@@ -12,8 +12,6 @@ class WorldMap extends StatelessWidget {
 
     Offset tokyoCoords =
         DotMapConverter.convertCoordsToMapCoords(35.6895, 139.6917);
-    Offset newYorkCoords =
-        DotMapConverter.convertCoordsToMapCoords(40.7128, -74.0060);
 
     return Stack(
       children: [
@@ -32,8 +30,6 @@ class WorldMap extends StatelessWidget {
             Colors.white),
         _addDotToMap(tokyoCoords.dx - 1, tokyoCoords.dy - 2, false, Colors.red,
             Colors.white),
-        _addDotToMap(newYorkCoords.dx - 1, newYorkCoords.dy - 2, false,
-            Colors.red, Colors.white),
       ],
     );
   }
