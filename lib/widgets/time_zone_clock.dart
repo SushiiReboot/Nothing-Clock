@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-class TimeZoneClock extends StatelessWidget {
+class TimeZoneClock extends StatefulWidget {
   const TimeZoneClock({
     super.key,
     required this.cityName,
-    required this.time,
   });
 
   final String cityName;
-  final String time;
+
+  @override
+  State<TimeZoneClock> createState() => _TimeZoneClockState();
+}
+
+class _TimeZoneClockState extends State<TimeZoneClock> {
+  String _formatDateTime(DateTime dateTime) {
+    return DateFormat('H:mm').format(dateTime);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,13 +44,13 @@ class TimeZoneClock extends StatelessWidget {
                   width: 10,
                 ),
                 Text(
-                  cityName.toUpperCase(),
+                  widget.cityName.toUpperCase(),
                   style: const TextStyle(fontSize: 16),
                 )
               ],
             ),
             Text(
-              time,
+              "00:00",
               style: theme.textTheme.titleLarge?.copyWith(fontSize: 33),
             )
           ],

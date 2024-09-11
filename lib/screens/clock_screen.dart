@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:nothing_clock/providers/location_provider.dart';
+import 'package:nothing_clock/providers/timer_provider.dart';
+import 'package:nothing_clock/services/time_country.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/world_map.dart';
 import 'package:provider/provider.dart';
@@ -29,8 +31,7 @@ class _ClockScreenState extends State<ClockScreen> {
     double clockContainerSize =
         (MediaQuery.of(context).size.width - 40 - cellPadding) / 2;
 
-    const List<String> testCitiesNames = ["Italy", "New York", "Tokyo"];
-    const List<String> testCitiesClocks = ["12:21", "06:21", "20:21"];
+    const List<String> testCitiesNames = ["Italy", "Japan"];
 
     return Scaffold(
       body: SafeArea(
@@ -77,10 +78,9 @@ class _ClockScreenState extends State<ClockScreen> {
                               crossAxisSpacing: 10,
                               mainAxisSpacing: 10),
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 3,
+                      itemCount: 2,
                       itemBuilder: (context, index) {
                         return TimeZoneClock(
-                          time: testCitiesClocks[index],
                           cityName: testCitiesNames[index],
                         );
                       }))
@@ -132,7 +132,7 @@ class _LocationInfoState extends State<LocationInfo> {
                 return Text('Error: ${snapshot.error}');
               } else {
                 final offset = snapshot.data ?? "0";
-                print("TES");
+                print("TES:");
                 return Column(
                   children: [
                     Text(
@@ -164,33 +164,22 @@ class CurrentTimeText extends StatefulWidget {
 }
 
 class _CurrentTimeTextState extends State<CurrentTimeText> {
-  late String _timeString;
-  late Timer _timer;
-
-  @override
-  void initState() {
-    _timeString = _formatDateTime(DateTime.now());
-    _timer =
-        Timer.periodic(const Duration(seconds: 1), (Timer t) => _getTime());
-
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
+  String _timeString = "00:00";
 
   String _formatDateTime(DateTime dateTime) {
     return DateFormat('H:mm').format(dateTime);
   }
 
-  void _getTime() {
+  void _updateTime() {
     final DateTime now = DateTime.now();
-    if (mounted) {
-      setState(() {
-        _timeString = _formatDateTime(now);
+    final String formattedTime = _formatDateTime(now);
+
+    // Only update if the time actually changed
+    if (_timeString != formattedTime) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _timeString = formattedTime;
+        });
       });
     }
   }
@@ -199,9 +188,12 @@ class _CurrentTimeTextState extends State<CurrentTimeText> {
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
-    return Text(
-      _timeString,
-      style: theme.textTheme.titleLarge?.copyWith(fontSize: 72),
-    );
+    return Consumer<TimerProvider>(builder: (context, timer, _) {
+      _updateTime();
+      return Text(
+        _timeString,
+        style: theme.textTheme.titleLarge?.copyWith(fontSize: 72),
+      );
+    });
   }
 }
