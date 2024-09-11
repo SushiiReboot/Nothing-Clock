@@ -33,12 +33,19 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_displaymode: ^0.6.0
+  flutter_dotenv: ^5.1.0
   flutter_map: ^7.0.2
   flutter_svg: ^2.0.10+1
   font_awesome_flutter: ^10.7.0
+  geocoding: ^3.0.0
+  geolocator: ^13.0.1
+  http: ^1.2.2
   intl: ^0.19.0
   proj4dart: ^2.1.0
+  provider: ^6.1.2
   shared_preferences: ^2.3.2
+  timezone: ^0.9.4
+  worldtime: ^1.2.2
 
 dev_dependencies:
   flutter_lints: ^4.0.0

@@ -33,8 +33,6 @@ class _RouterState extends State<Router> {
           _selectedIndex = index;
         });
 
-        print("calll $index");
-
         _pageController.animateToPage(index,
             duration: const Duration(milliseconds: 300),
             curve: Curves.fastOutSlowIn);
@@ -45,8 +43,6 @@ class _RouterState extends State<Router> {
       setState(() {
         _selectedIndex = index;
       });
-
-      print("scorll $index");
     }
 
     return Scaffold(
