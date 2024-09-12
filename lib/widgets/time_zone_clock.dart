@@ -45,13 +45,15 @@ class _TimeZoneClockState extends State<TimeZoneClock> {
                 ),
                 Text(
                   widget.cityName.toUpperCase(),
-                  style: const TextStyle(fontSize: 16),
+                  style: TextStyle(
+                      fontSize: 16, color: theme.colorScheme.onTertiary),
                 )
               ],
             ),
             Text(
               "00:00",
-              style: theme.textTheme.titleLarge?.copyWith(fontSize: 33),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontSize: 33, color: theme.colorScheme.onTertiary),
             )
           ],
         ),

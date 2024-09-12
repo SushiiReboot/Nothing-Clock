@@ -7,6 +7,8 @@ class WorldMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
+
     Offset sicilyCoords =
         DotMapConverter.convertCoordsToMapCoords(38.116669, 13.366667);
 
@@ -16,12 +18,12 @@ class WorldMap extends StatelessWidget {
     return Stack(
       children: [
         Container(
-          color: Colors.black,
+          color: Colors.transparent,
           child: SvgPicture.asset(
             width: 370,
             "lib/assets/map/map.svg",
-            colorFilter: const ColorFilter.mode(
-              Color.fromARGB(255, 85, 85, 85),
+            colorFilter: ColorFilter.mode(
+              theme.colorScheme.tertiary,
               BlendMode.srcIn,
             ),
           ),

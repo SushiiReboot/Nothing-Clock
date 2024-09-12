@@ -82,7 +82,7 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
           labelColor: Colors.red,
           tabAlignment: TabAlignment.start,
           dividerColor: Colors.transparent,
-          unselectedLabelColor: theme.colorScheme.secondary,
+          unselectedLabelColor: theme.colorScheme.onSurface,
           indicatorColor: Colors.transparent,
           tabs: const [
             Tab(text: "CLOCK"),

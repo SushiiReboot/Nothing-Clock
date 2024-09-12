@@ -13,7 +13,7 @@ class StopwatchScreen extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: _buildStopwatchUI()),
+          Expanded(child: _buildStopwatchUI(theme)),
           Padding(
             padding: const EdgeInsets.only(bottom: 75.0),
             child: Row(
@@ -32,18 +32,18 @@ class StopwatchScreen extends StatelessWidget {
                   scale: 1.5,
                   child: StopwatchBtnController(
                       isFilled: true,
-                      filledColor: theme.colorScheme.secondary,
-                      borderColor: theme.colorScheme.secondary,
+                      filledColor: theme.colorScheme.onSurface,
+                      borderColor: theme.colorScheme.onSurface,
                       iconColor: theme.colorScheme.surface,
                       icon: Icons.pause),
                 ),
                 const SizedBox(
                   width: 40,
                 ),
-                const StopwatchBtnController(
+                StopwatchBtnController(
                     isFilled: false,
                     filledColor: null,
-                    borderColor: Colors.white,
+                    borderColor: theme.colorScheme.onSurface,
                     iconColor: null,
                     icon: Icons.add),
               ],
@@ -54,7 +54,7 @@ class StopwatchScreen extends StatelessWidget {
     );
   }
 
-  Center _buildStopwatchUI() {
+  Center _buildStopwatchUI(ThemeData theme) {
     return Center(
       child: Container(
         width: 375,
@@ -89,7 +89,7 @@ class StopwatchScreen extends StatelessWidget {
                   child: InkWell(
                       onTap: () {},
                       customBorder: const CircleBorder(),
-                      child: const Icon(Icons.play_arrow)),
+                      child: const Icon(Icons.play_arrow, color: Colors.white)),
                 ),
               ),
             ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:nothing_clock/providers/theme_provider.dart';
 import 'package:nothing_clock/widgets/switch_button.dart';
+import 'package:provider/provider.dart';
 
 class AlarmsScreen extends StatelessWidget {
   const AlarmsScreen({super.key});
@@ -9,6 +11,7 @@ class AlarmsScreen extends StatelessWidget {
     ThemeData theme = Theme.of(context);
 
     double alarmBlockSize = (MediaQuery.of(context).size.width - 40 - 10) / 2;
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
       body: SafeArea(
@@ -20,19 +23,17 @@ class AlarmsScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("SLEEP TIME",
-                        style: TextStyle(
-                            color: Color.fromARGB(255, 163, 163, 163))),
+                    Text("SLEEP TIME",
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
                     const SizedBox(
                       height: 15,
                     ),
-                    _buildSleepAlarm(theme),
+                    _buildSleepAlarm(theme, themeProvider),
                     const SizedBox(
                       height: 35,
                     ),
-                    const Text("OTHER",
-                        style: TextStyle(
-                            color: Color.fromARGB(255, 163, 163, 163))),
+                    Text("OTHER",
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
                     const SizedBox(
                       height: 15,
                     ),
@@ -48,7 +49,7 @@ class AlarmsScreen extends StatelessWidget {
                             itemCount: 2,
                             itemBuilder: (context, index) {
                               return _buildAlarmBlock(
-                                  theme, index, alarmBlockSize);
+                                  theme, index, alarmBlockSize, context);
                             })),
                     InkWell(
                       onTap: () {
@@ -64,14 +65,20 @@ class AlarmsScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                             color: Colors.transparent,
                             border: Border.all(
-                                color: theme.colorScheme.secondary, width: 0.5),
+                                color: themeProvider.isDarkMode
+                                    ? Colors.white
+                                    : theme.colorScheme.tertiary,
+                                width: 0.5),
                             borderRadius: BorderRadius.circular(10)),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 22),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add, color: Colors.white),
+                            Icon(Icons.add,
+                                color: themeProvider.isDarkMode
+                                    ? Colors.white
+                                    : theme.colorScheme.tertiary),
                           ],
                         ),
                       ),
@@ -130,9 +137,11 @@ class AlarmsScreen extends StatelessWidget {
   }
 
   Container _buildAlarmBlock(
-      ThemeData theme, int index, double alarmBlockSize) {
+      ThemeData theme, int index, double alarmBlockSize, BuildContext context) {
     List<String> _testAlarmClocks = ["08:15", "09:15"];
     List<String> _testAlarmDays = ["MON, TUE", "MON, TUE, WED"];
+
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Container(
       width: 200,
@@ -154,22 +163,40 @@ class AlarmsScreen extends StatelessWidget {
               const SizedBox(
                 height: 10,
               ),
-              Text(_testAlarmDays[index]),
+              Text(
+                _testAlarmDays[index],
+                style: TextStyle(color: theme.colorScheme.onTertiary),
+              ),
             ],
           ),
           Positioned(
               top: alarmBlockSize - 80,
               left: 75,
-              child: const SwitchButtonBlock())
+              child: SwitchButton(
+                inactiveThumbColor: themeProvider.isDarkMode
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.surface,
+                inactiveTrackColor: theme.colorScheme.tertiary,
+                activeTrackColor: theme.colorScheme.tertiary,
+                outlineColor: themeProvider.isDarkMode
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.surface,
+              ))
         ]),
       ),
     );
   }
 
-  Container _buildSleepAlarm(ThemeData theme) {
+  Container _buildSleepAlarm(ThemeData theme, ThemeProvider themeProvider) {
+    bool isDarkMode = themeProvider.isDarkMode;
+
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.secondary,
+        color: isDarkMode ? theme.colorScheme.secondary : Colors.transparent,
+        border: Border.all(
+            width: isDarkMode ? 0 : 1,
+            color:
+                isDarkMode ? Colors.transparent : theme.colorScheme.onSurface),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
@@ -183,19 +210,22 @@ class AlarmsScreen extends StatelessWidget {
               children: [
                 Text(
                   "08:15",
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(color: Colors.black, fontSize: 32),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                      color: theme.colorScheme.onSecondary, fontSize: 32),
                 ),
                 const SizedBox(
                   height: 10,
                 ),
-                const Text(
+                Text(
                   "MON, TUE, WED",
-                  style: TextStyle(color: Colors.black),
+                  style: TextStyle(color: theme.colorScheme.onSecondary),
                 )
               ],
             ),
-            const SwitchButton(),
+            const SwitchButton(
+              inactiveTrackColor: Colors.transparent,
+              activeTrackColor: Colors.transparent,
+            ),
           ],
         ),
       ),

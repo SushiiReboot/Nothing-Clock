@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:nothing_clock/providers/location_provider.dart';
 import 'package:nothing_clock/providers/page_provider.dart';
+import 'package:nothing_clock/providers/theme_provider.dart';
 import 'package:nothing_clock/widgets/clock_screen/current_time_text.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/world_map.dart';
@@ -34,6 +35,7 @@ class _ClockScreenState extends State<ClockScreen> {
 
     const List<String> testCitiesNames = ["Italy", "Japan"];
     final pageProvider = Provider.of<PageProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
       body: SafeArea(
@@ -61,8 +63,13 @@ class _ClockScreenState extends State<ClockScreen> {
                     width: 10,
                   ),
                   InfoDisplayClock(
-                    color: theme.colorScheme.secondary,
-                    foregroundColor: Colors.black,
+                    outlineColor: themeProvider.isDarkMode
+                        ? null
+                        : theme.colorScheme.onSurface,
+                    color: themeProvider.isDarkMode
+                        ? theme.colorScheme.secondary
+                        : Colors.transparent,
+                    foregroundColor: theme.colorScheme.onSecondary,
                     text: "1 alarm",
                     icon: FontAwesomeIcons.chevronRight,
                     onTap: () {
@@ -124,6 +131,8 @@ class _LocationInfoState extends State<LocationInfo> {
 
   @override
   Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
+
     return Column(
       children: [
         const CurrentTimeText(),
@@ -145,18 +154,22 @@ class _LocationInfoState extends State<LocationInfo> {
                     location.currentPosition?.longitude == null ||
                     offset == "0") {
                   return LoadingAnimationWidget.horizontalRotatingDots(
-                      color: Colors.white, size: 15);
+                      color: theme.colorScheme.onSurface, size: 15);
                 }
 
                 return Column(
                   children: [
                     Text(
-                      "${location.currentAddress?.locality} | UTC $offset",
+                      // "${location.currentAddress?.locality} | UTC $offset",
+                      "Italy | UTC $offset",
                       style: const TextStyle(fontSize: 16),
                     ),
                     Text(
-                      "${location.currentPosition?.latitude}, ${location.currentPosition?.longitude}",
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      // "${location.currentPosition?.latitude}, ${location.currentPosition?.longitude}",
+                      "41.87194, 9.1900",
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurface.withOpacity(0.8)),
                     )
                   ],
                 );

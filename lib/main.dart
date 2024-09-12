@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:nothing_clock/providers/location_provider.dart';
 import 'package:nothing_clock/providers/page_provider.dart';
+import 'package:nothing_clock/providers/theme_provider.dart';
 import 'package:nothing_clock/providers/timer_provider.dart';
 import 'package:nothing_clock/screens/router.dart' as RouterPage;
 import 'package:nothing_clock/services/time_country.dart';
@@ -32,13 +33,18 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (context) => LocationProvider()),
         ChangeNotifierProvider(create: (context) => PageProvider()),
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
       ],
-      child: MaterialApp(
-        title: 'Nothing Clock',
-        debugShowCheckedModeBanner: false,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
-        home: const RouterPage.Router(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) => MaterialApp(
+          title: 'Nothing Clock',
+          debugShowCheckedModeBanner: false,
+          darkTheme: AppTheme.dark,
+          theme: AppTheme.light,
+          themeMode:
+              themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          home: const RouterPage.Router(),
+        ),
       ),
     );
   }
