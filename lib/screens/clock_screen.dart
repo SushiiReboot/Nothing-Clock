@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:nothing_clock/providers/location_provider.dart';
 import 'package:nothing_clock/providers/page_provider.dart';
 import 'package:nothing_clock/widgets/clock_screen/current_time_text.dart';
@@ -138,6 +139,15 @@ class _LocationInfoState extends State<LocationInfo> {
               } else {
                 final offset = snapshot.data ?? "0";
                 print("TES:");
+
+                if (location.currentAddress?.locality == null ||
+                    location.currentPosition?.latitude == null ||
+                    location.currentPosition?.longitude == null ||
+                    offset == "0") {
+                  return LoadingAnimationWidget.horizontalRotatingDots(
+                      color: Colors.white, size: 15);
+                }
+
                 return Column(
                   children: [
                     Text(
