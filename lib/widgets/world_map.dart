@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:nothing_clock/providers/theme_provider.dart';
 import 'package:nothing_clock/services/dot_map_converter.dart';
+import 'package:provider/provider.dart';
 
 class WorldMap extends StatelessWidget {
   const WorldMap({super.key});
@@ -15,6 +17,12 @@ class WorldMap extends StatelessWidget {
     Offset tokyoCoords =
         DotMapConverter.convertCoordsToMapCoords(35.6895, 139.6917);
 
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    final otherLocationPinColor = themeProvider.isDarkMode
+        ? const Color.fromARGB(255, 255, 255, 255)
+        : const Color.fromARGB(255, 250, 134, 2);
+
     return Stack(
       children: [
         Container(
@@ -23,15 +31,17 @@ class WorldMap extends StatelessWidget {
             width: 370,
             "lib/assets/map/map.svg",
             colorFilter: ColorFilter.mode(
-              theme.colorScheme.tertiary,
+              themeProvider.isDarkMode
+                  ? const Color.fromARGB(255, 59, 59, 59)
+                  : Colors.black,
               BlendMode.srcIn,
             ),
           ),
         ),
         _addDotToMap(sicilyCoords.dx - 1, sicilyCoords.dy - 2, true, Colors.red,
-            Colors.white),
+            otherLocationPinColor),
         _addDotToMap(tokyoCoords.dx - 1, tokyoCoords.dy - 2, false, Colors.red,
-            Colors.white),
+            otherLocationPinColor),
       ],
     );
   }

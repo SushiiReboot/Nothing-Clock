@@ -147,7 +147,6 @@ class _LocationInfoState extends State<LocationInfo> {
                 return Text('Error: ${snapshot.error}');
               } else {
                 final offset = snapshot.data ?? "0";
-                print("TES:");
 
                 if (location.currentAddress?.locality == null ||
                     location.currentPosition?.latitude == null ||
@@ -160,13 +159,11 @@ class _LocationInfoState extends State<LocationInfo> {
                 return Column(
                   children: [
                     Text(
-                      // "${location.currentAddress?.locality} | UTC $offset",
-                      "Italy | UTC $offset",
+                      "${location.currentAddress?.locality} | UTC $offset",
                       style: const TextStyle(fontSize: 16),
                     ),
                     Text(
-                      // "${location.currentPosition?.latitude}, ${location.currentPosition?.longitude}",
-                      "41.87194, 9.1900",
+                      "${location.currentPosition?.latitude}, ${location.currentPosition?.longitude}",
                       style: TextStyle(
                           fontSize: 12,
                           color: theme.colorScheme.onSurface.withOpacity(0.8)),
