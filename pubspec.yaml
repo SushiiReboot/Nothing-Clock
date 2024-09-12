@@ -46,6 +46,7 @@ dependencies:
   provider: ^6.1.2
   shared_preferences: ^2.3.2
   timezone: ^0.9.4
+  url_launcher: ^6.3.0
   worldtime: ^1.2.2
 
 dev_dependencies:

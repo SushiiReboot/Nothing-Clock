@@ -53,8 +53,8 @@ class _RouterState extends State<Router> {
 
               _pageController.animateToPage(
                 pageProvider.selectedIndex,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.linear,
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeInOut,
               );
             }
           });

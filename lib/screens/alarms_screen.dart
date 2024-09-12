@@ -22,13 +22,19 @@ class AlarmsScreen extends StatelessWidget {
                   children: [
                     const Text("SLEEP TIME",
                         style: TextStyle(
-                            color: Color.fromARGB(255, 128, 128, 128))),
+                            color: Color.fromARGB(255, 163, 163, 163))),
                     const SizedBox(
-                      height: 20,
+                      height: 15,
                     ),
                     _buildSleepAlarm(theme),
                     const SizedBox(
-                      height: 20,
+                      height: 35,
+                    ),
+                    const Text("OTHER",
+                        style: TextStyle(
+                            color: Color.fromARGB(255, 163, 163, 163))),
+                    const SizedBox(
+                      height: 15,
                     ),
                     SizedBox(
                         height: 200,
@@ -45,7 +51,13 @@ class AlarmsScreen extends StatelessWidget {
                                   theme, index, alarmBlockSize);
                             })),
                     InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        showModalBottomSheet<void>(
+                            context: context,
+                            builder: (context) {
+                              return _buildModalBottomSheetUI(theme);
+                            });
+                      },
                       child: Container(
                         height: alarmBlockSize,
                         width: alarmBlockSize,
@@ -69,6 +81,49 @@ class AlarmsScreen extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Container _buildModalBottomSheetUI(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+          color: theme.colorScheme.tertiary,
+          borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20), topRight: Radius.circular(20))),
+      height: 500,
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 50),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("ALARMS"),
+            const SizedBox(
+              height: 20,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border:
+                    Border.all(color: theme.colorScheme.secondary, width: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  "18:26",
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontSize: 40, letterSpacing: 5),
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            const AlarmsDaysList()
+          ],
         ),
       ),
     );
@@ -144,6 +199,105 @@ class AlarmsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class AlarmsDaysList extends StatelessWidget {
+  const AlarmsDaysList({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 15, left: 10),
+          child: Text("DAYS",
+              style: theme.textTheme.labelLarge
+                  ?.copyWith(color: const Color.fromARGB(255, 163, 163, 163))),
+        ),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AlarmDayBtn(
+              dayInital: "M",
+            ),
+            AlarmDayBtn(
+              dayInital: "T",
+            ),
+            AlarmDayBtn(
+              dayInital: "W",
+            ),
+            AlarmDayBtn(
+              dayInital: "T",
+            ),
+            AlarmDayBtn(
+              dayInital: "F",
+            ),
+            AlarmDayBtn(
+              dayInital: "S",
+            ),
+            AlarmDayBtn(
+              dayInital: "S",
+            ),
+          ],
+        )
+      ],
+    );
+  }
+}
+
+class AlarmDayBtn extends StatefulWidget {
+  const AlarmDayBtn({
+    super.key,
+    required this.dayInital,
+  });
+
+  final String dayInital;
+
+  @override
+  State<AlarmDayBtn> createState() => _AlarmDayBtnState();
+}
+
+class _AlarmDayBtnState extends State<AlarmDayBtn> {
+  bool _isSelected = false;
+
+  @override
+  Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
+
+    _onSelect() {
+      setState(() {
+        _isSelected = !_isSelected;
+      });
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 5.0),
+      child: Material(
+          color: _isSelected ? theme.colorScheme.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(50),
+          child: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                    color: _isSelected
+                        ? Colors.transparent
+                        : theme.colorScheme.secondary,
+                    width: _isSelected ? 0 : 0.5)),
+            child: InkWell(
+                onTap: _onSelect,
+                radius: 50,
+                borderRadius: BorderRadius.circular(50),
+                child: Center(child: Text(widget.dayInital.toUpperCase()))),
+          )),
     );
   }
 }
