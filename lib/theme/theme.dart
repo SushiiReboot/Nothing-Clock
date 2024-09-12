@@ -7,6 +7,8 @@ class AppTheme {
       textTheme: const TextTheme(
           labelLarge: TextStyle(
               fontFamily: "Roboto", fontSize: 15, fontWeight: FontWeight.w400),
+          labelMedium: TextStyle(
+              fontFamily: "Roboto", fontSize: 12, fontWeight: FontWeight.w100),
           titleLarge: TextStyle(fontFamily: "NDot", fontSize: 25)),
       colorScheme: const ColorScheme.dark(
           surface: Colors.black,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nothing_clock/screens/settings_screen.dart';
 
 class TopBar extends StatefulWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState>? scaffoldKey;
@@ -62,7 +63,10 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () {
-              widget.scaffoldKey?.currentState?.openEndDrawer();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
             },
           ),
         ],
