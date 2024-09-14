@@ -1,27 +1,25 @@
+// timer_provider.dart
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 class TimerProvider with ChangeNotifier {
   Timer? _timer;
-  DateTime _previousTime = DateTime.now();
 
-  TimerProvider() {
-    startTimer();
-  }
+  TimerProvider();
 
   void startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
-      final DateTime currentTime = DateTime.now();
-      if(currentTime.minute != _previousTime.minute) {
-        _previousTime = currentTime;
-        notifyListeners();
-      }
+    // Cancel any existing timer
+    _timer?.cancel();
+
+    _timer = Timer.periodic(const Duration(minutes: 1), (Timer t) {
+      print("Timer tick");
+      notifyListeners();
     });
   }
 
   void disposeTimer() {
     _timer?.cancel();
+    _timer = null;
   }
 
   @override

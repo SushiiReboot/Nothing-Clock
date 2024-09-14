@@ -9,8 +9,6 @@ class WorldMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ThemeData theme = Theme.of(context);
-
     Offset sicilyCoords =
         DotMapConverter.convertCoordsToMapCoords(38.116669, 13.366667);
 

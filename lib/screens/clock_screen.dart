@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:nothing_clock/models/world_clock_data.dart';
 import 'package:nothing_clock/providers/location_provider.dart';
 import 'package:nothing_clock/providers/page_provider.dart';
 import 'package:nothing_clock/providers/theme_provider.dart';
+import 'package:nothing_clock/providers/worldclocks_provider.dart';
 import 'package:nothing_clock/widgets/clock_screen/current_time_text.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/world_map.dart';
@@ -33,7 +35,9 @@ class _ClockScreenState extends State<ClockScreen> {
     double clockContainerSize =
         (MediaQuery.of(context).size.width - 40 - cellPadding) / 2;
 
-    const List<String> testCitiesNames = ["Italy", "Japan"];
+    const List<String> testCitiesNames = ["Rome", "Tokyo"];
+    const List<String> testContinents = ["Europe", "Asia"];
+
     final pageProvider = Provider.of<PageProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
 
@@ -44,7 +48,7 @@ class _ClockScreenState extends State<ClockScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              LocationInfo(),
+              const LocationInfo(),
               const SizedBox(
                 height: 40,
               ),
@@ -85,18 +89,25 @@ class _ClockScreenState extends State<ClockScreen> {
               SizedBox(
                   height: clockContainerSize * 2 + 120,
                   child: GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10),
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 2,
-                      itemBuilder: (context, index) {
-                        return TimeZoneClock(
-                          cityName: testCitiesNames[index],
-                        );
-                      }))
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10),
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: 2,
+                    // In ClockScreen.dart
+                    itemBuilder: (context, index) {
+                      return ChangeNotifierProvider<WorldClockData>.value(
+                        value: Provider.of<WorldClocksProvider>(context)
+                            .worldClocks[index],
+                        child: TimeZoneClock(
+                          data: Provider.of<WorldClocksProvider>(context)
+                              .worldClocks[index],
+                        ),
+                      );
+                    },
+                  ))
             ],
           ),
         ),
