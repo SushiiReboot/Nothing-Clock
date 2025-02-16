@@ -8,8 +8,8 @@ class DotMapConverter {
     final double xKyiv = mercator.xAxisProjection(lng);
     final double yKyiv = mercator.yAxisProjection(lat);
 
-    final int mapWidth = 62;
-    final int mapHeight = 28;
+    const int mapWidth = 62;
+    const int mapHeight = 28;
 
     // Scale the coordinates to fit the 62x28 map
     final double xScaledKyiv = ((xKyiv + pi * SphericalMercator.radiusMajor) /

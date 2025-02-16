@@ -138,8 +138,8 @@ class AlarmsScreen extends StatelessWidget {
 
   Container _buildAlarmBlock(
       ThemeData theme, int index, double alarmBlockSize, BuildContext context) {
-    List<String> _testAlarmClocks = ["08:15", "09:15"];
-    List<String> _testAlarmDays = ["MON, TUE", "MON, TUE, WED"];
+    List<String> testAlarmClocks = ["08:15", "09:15"];
+    List<String> testAlarmDays = ["MON, TUE", "MON, TUE, WED"];
 
     final themeProvider = Provider.of<ThemeProvider>(context);
 
@@ -156,7 +156,7 @@ class AlarmsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _testAlarmClocks[index],
+                testAlarmClocks[index],
                 style:
                     theme.textTheme.titleLarge?.copyWith(color: Colors.white),
               ),
@@ -164,7 +164,7 @@ class AlarmsScreen extends StatelessWidget {
                 height: 10,
               ),
               Text(
-                _testAlarmDays[index],
+                testAlarmDays[index],
                 style: TextStyle(color: theme.colorScheme.onTertiary),
               ),
             ],
@@ -301,7 +301,7 @@ class _AlarmDayBtnState extends State<AlarmDayBtn> {
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
-    _onSelect() {
+    onSelect() {
       setState(() {
         _isSelected = !_isSelected;
       });
@@ -323,7 +323,7 @@ class _AlarmDayBtnState extends State<AlarmDayBtn> {
                         : theme.colorScheme.secondary,
                     width: _isSelected ? 0 : 0.5)),
             child: InkWell(
-                onTap: _onSelect,
+                onTap: onSelect,
                 radius: 50,
                 borderRadius: BorderRadius.circular(50),
                 child: Center(child: Text(widget.dayInital.toUpperCase()))),

@@ -9,7 +9,7 @@ import 'package:nothing_clock/providers/location_provider.dart';
 import 'package:nothing_clock/providers/page_provider.dart';
 import 'package:nothing_clock/providers/theme_provider.dart';
 import 'package:nothing_clock/providers/worldclocks_provider.dart';
-import 'package:nothing_clock/widgets/clock_screen/current_time_text.dart';
+import 'package:nothing_clock/widgets/clock_stream_widget.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/world_map.dart';
 import 'package:provider/provider.dart';
@@ -146,7 +146,7 @@ class _LocationInfoState extends State<LocationInfo> {
 
     return Column(
       children: [
-        const CurrentTimeText(),
+        const ClockStreamWidget(),
         const SizedBox(
           height: 10,
         ),

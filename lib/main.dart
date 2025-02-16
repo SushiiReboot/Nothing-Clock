@@ -18,11 +18,11 @@ void main() async {
   tz.initializeTimeZones();
   await TimeCountry.init();
 
-  runApp(const MyApp());
+  runApp(const NothingClock());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class NothingClock extends StatelessWidget {
+  const NothingClock({super.key});
 
   // This widget is the root of your application.
   @override

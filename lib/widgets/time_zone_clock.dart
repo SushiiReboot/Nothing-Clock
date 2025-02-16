@@ -7,7 +7,7 @@ import 'package:nothing_clock/models/world_clock_data.dart';
 class TimeZoneClock extends StatefulWidget {
   final WorldClockData data;
 
-  const TimeZoneClock({Key? key, required this.data}) : super(key: key);
+  const TimeZoneClock({super.key, required this.data});
 
   @override
   _TimeZoneClockState createState() => _TimeZoneClockState();
@@ -54,7 +54,7 @@ class _TimeZoneClockState extends State<TimeZoneClock> {
       });
 
       // Schedule periodic updates every minute thereafter
-      _timer = Timer.periodic(Duration(minutes: 1), (timer) {
+      _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
         setState(() {
           _currentTime = widget.data.getCurrentTime();
         });
