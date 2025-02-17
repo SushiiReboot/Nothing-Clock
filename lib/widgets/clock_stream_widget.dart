@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:nothing_clock/providers/clock_provider.dart';
+import 'package:provider/provider.dart';
 
 /// A widget that listens to a clock event stream and updates the displayed time in real-time.
 class ClockStreamWidget extends StatefulWidget {
@@ -10,28 +11,13 @@ class ClockStreamWidget extends StatefulWidget {
 }
 
 class _ClockStreamWidgetState extends State<ClockStreamWidget> {
-  /// EventChannel to listen for native clock events.
-  static const _clockEventChannel = EventChannel("clockEventChannel");
-
-  /// Stream of DateTime values representing the clock updates.
-  late Stream<DateTime> _clockStream;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Initialize the stream to listen for clock events from the native platform.
-    // The event received is in milliseconds since epoch, converted to a DateTime object.
-    _clockStream = _clockEventChannel
-        .receiveBroadcastStream()
-        .map((event) => DateTime.fromMillisecondsSinceEpoch(event));
-  }
-
   @override
   Widget build(BuildContext context) {
+    final clockProvider = Provider.of<ClockProvider>(context);
+
     return StreamBuilder<DateTime>(
       // Listen to the clock event stream.
-      stream: _clockStream,
+      stream: clockProvider.clockStream,
       builder: (context, snapshot) {
         // Show a loading indicator if no data is available yet.
         if (!snapshot.hasData) return const CircularProgressIndicator();

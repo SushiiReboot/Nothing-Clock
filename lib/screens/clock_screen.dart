@@ -48,6 +48,7 @@ class _ClockScreenState extends State<ClockScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              const ClockStreamWidget(),
               const LocationInfo(),
               const SizedBox(
                 height: 40,
@@ -146,10 +147,6 @@ class _LocationInfoState extends State<LocationInfo> {
 
     return Column(
       children: [
-        const ClockStreamWidget(),
-        const SizedBox(
-          height: 10,
-        ),
         Consumer<LocationProvider>(builder: (context, location, _) {
           return FutureBuilder(
             future: _getTimeZoneOffset(location),

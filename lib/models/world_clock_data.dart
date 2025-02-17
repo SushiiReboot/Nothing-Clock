@@ -3,23 +3,46 @@
 import 'package:flutter/material.dart';
 
 class WorldClockData with ChangeNotifier {
-  final String city;
+  final String capital;
   final String continent;
-  DateTime currentDateTime;
-  DateTime initialDateTime; // Time received from the API
-  DateTime initialFetchTime; // Time when the API call was made
-  bool isDataReady = false;
+
+  int utcTime;
+  String currentFormattedTime;
+
+  set utc(int value) {
+    if (value < -12) {
+      utcTime = -12;
+      notifyListeners();
+      return;
+    } else if (value > 14) {
+      utcTime = 14;
+      notifyListeners();
+      return;
+    }
+
+    utcTime = value;
+    notifyListeners();
+  }
+
+  int get utc => utcTime;
+
+  void calculateTimeOffset() {
+    DateTime localTime = DateTime.now().toUtc();
+
+    int hour = localTime.hour + utcTime;
+    int minutes = localTime.minute;
+
+    //The hour ranges from 00 to 23. If the hour is negative, we need to wrap it around.
+    int wrappedHour = (hour % 24 + 24) % 24;
+
+    currentFormattedTime = "${(wrappedHour).toString().padLeft(2, "0")}:${minutes.toString().padLeft(2, "0")}";
+    debugPrint("UTC Time: $localTime. Offset: $utcTime");
+  }
 
   WorldClockData({
-    required this.city,
+    required this.currentFormattedTime,
+    required this.utcTime,
+    required this.capital,
     required this.continent,
-    required this.currentDateTime,
-    required this.initialDateTime,
-    required this.initialFetchTime,
   });
-
-  DateTime getCurrentTime() {
-    Duration elapsed = DateTime.now().toUtc().difference(initialFetchTime);
-    return initialDateTime.add(elapsed);
-  }
 }
