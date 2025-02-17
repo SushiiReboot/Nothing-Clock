@@ -39,7 +39,7 @@ class _TimeZoneClockState extends State<TimeZoneClock> {
                   width: 10,
                 ),
                 Text(
-                  widget.data.capital.toUpperCase(),
+                  widget.data.displayName.toUpperCase(),
                   style: TextStyle(
                       fontSize: 16, color: theme.colorScheme.onTertiary),
                 )

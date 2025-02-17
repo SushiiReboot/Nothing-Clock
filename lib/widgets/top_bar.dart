@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nothing_clock/screens/city_search_screen.dart';
 import 'package:nothing_clock/screens/settings_screen.dart';
 
 class TopBar extends StatefulWidget implements PreferredSizeWidget {
@@ -70,7 +71,15 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
             },
           ),
         ],
-        leading: IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CitySearchScreen(),
+                  ));
+            },
+            icon: const Icon(Icons.add)),
         title: TabBar(
           onTap: (value) {
             setState(() {

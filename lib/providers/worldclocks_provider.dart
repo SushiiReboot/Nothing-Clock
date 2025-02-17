@@ -19,8 +19,6 @@ class WorldClocksProvider with ChangeNotifier {
   StreamSubscription<dynamic>? _timeTickSubscription;
 
   WorldClocksProvider(BuildContext context) {
-    _initWithTestData(); //TODO: Remove this after testing
-
     _initialize();
     _subscribeToTimeTick(context);
   }
@@ -35,7 +33,7 @@ class WorldClocksProvider with ChangeNotifier {
     for (var worldClock in _worldClocks) {
 
       // Fetch the UTC offset for the given continent and capital.
-      final response = await _fetchUtcTimezone(worldClock.continent, worldClock.capital);
+      final response = await _fetchUtcTimezone(worldClock.latitude, worldClock.longitude);
       worldClock.utc = response.utcOffset;
 
       // Recalculate the clock's time offset based on the new UTC value and the standard UTC time.
@@ -74,28 +72,21 @@ class WorldClocksProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Fetches the UTC timezone data for the given continent and capital.
+  /// Fetches the UTC timezone data for the given coordinates.
   /// Returns a TimezoneData object containing the UTC offset.
-  Future<TimezoneData> _fetchUtcTimezone(String continent, String capital) async {
+  Future<TimezoneData> _fetchUtcTimezone(double latitude, double longitude) async {
     try {
       final response = await http.get(Uri.parse(
-        'http://worldtimeapi.org/api/timezone/$continent/$capital'));
+        'http://api.geonames.org/timezoneJSON?lat=$latitude&lng=$longitude&username=sashachverenko'));
 
     
-    debugPrint("Fetched time for $continent/$capital");
+    debugPrint("Fetched time for $latitude/$longitude");
     final jsonData = jsonDecode(response.body);
 
-    final utcOffsetString = jsonData['utc_offset'].toString();
-
-    // Determine if the offset is negative.
-    final signValue = utcOffsetString.startsWith("-") ? -1 : 1;
-
-    // Parse the hour portion of the UTC offset.
-    final hours = int.parse(utcOffsetString.substring(1, 3));
-    final utcOffset = signValue * hours;
+    final int utcOffset = jsonData['gmtOffset'];
 
     return TimezoneData(
-      utcOffset: utcOffset,
+      utcOffset: utcOffset
     );
     } catch(e) {
       debugPrint("Error fetching time: $e");
@@ -103,32 +94,20 @@ class WorldClocksProvider with ChangeNotifier {
     }
   }
 
-  /// Initializes the world clocks with test data.
-  /// This data is for testing purposes and should be removed in production.
-  void _initWithTestData() {    
-    _worldClocks = [
-      WorldClockData(
-        capital: "Rome",
-        continent: "Europe",
-        utcTime: 0,
-        currentFormattedTime: "00:00"
-      ),
-      WorldClockData(
-        capital: "Tokyo",
-        continent: "Asia",
-        utcTime: 0,
-        currentFormattedTime: "00:00"
-      ),
-    ];
-  }
-
   /// Adds a new world clock to the list.
-  void addWorldClock(WorldClockData worldClock) {
+  void addWorldClock(WorldClockData worldClock) async {
+    TimezoneData timezoneData = await _fetchUtcTimezone(worldClock.latitude, worldClock.longitude);
+    worldClock.utc = timezoneData.utcOffset;
+    worldClock.calculateTimeOffset();
+    
     _worldClocks.add(worldClock);
+
+    notifyListeners();
   }
 
   /// Removes a world clock from the list.
   void removeWorldClock(WorldClockData worldClock) {
     _worldClocks.remove(worldClock);
+    notifyListeners();
   }
 }

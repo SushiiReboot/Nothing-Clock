@@ -3,8 +3,9 @@
 import 'package:flutter/material.dart';
 
 class WorldClockData with ChangeNotifier {
-  final String capital;
-  final String continent;
+  final double longitude;
+  final double latitude;
+  final String displayName;
 
   int utcTime;
   String currentFormattedTime;
@@ -42,7 +43,8 @@ class WorldClockData with ChangeNotifier {
   WorldClockData({
     required this.currentFormattedTime,
     required this.utcTime,
-    required this.capital,
-    required this.continent,
+    required this.longitude,
+    required this.latitude,
+    required this.displayName,
   });
 }

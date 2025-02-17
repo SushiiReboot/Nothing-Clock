@@ -35,11 +35,9 @@ class _ClockScreenState extends State<ClockScreen> {
     double clockContainerSize =
         (MediaQuery.of(context).size.width - 40 - cellPadding) / 2;
 
-    const List<String> testCitiesNames = ["Rome", "Tokyo"];
-    const List<String> testContinents = ["Europe", "Asia"];
-
     final pageProvider = Provider.of<PageProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final worldClocksProvider = Provider.of<WorldClocksProvider>(context);
 
     return Scaffold(
       body: SafeArea(
@@ -96,15 +94,13 @@ class _ClockScreenState extends State<ClockScreen> {
                             crossAxisSpacing: 10,
                             mainAxisSpacing: 10),
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: 2,
+                    itemCount: worldClocksProvider.worldClocks.length,
                     // In ClockScreen.dart
                     itemBuilder: (context, index) {
                       return ChangeNotifierProvider<WorldClockData>.value(
-                        value: Provider.of<WorldClocksProvider>(context)
-                            .worldClocks[index],
+                        value: worldClocksProvider.worldClocks[index],
                         child: TimeZoneClock(
-                          data: Provider.of<WorldClocksProvider>(context)
-                              .worldClocks[index],
+                          data: worldClocksProvider.worldClocks[index],
                         ),
                       );
                     },
