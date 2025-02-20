@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:nothing_clock/models/alarm.dart';
 import 'package:nothing_clock/providers/clock_provider.dart';
 import 'package:nothing_clock/providers/location_provider.dart';
 import 'package:nothing_clock/providers/page_provider.dart';
@@ -17,6 +20,9 @@ void main() async {
 
   tz.initializeTimeZones();
   await TimeCountry.init();
+
+  await Hive.initFlutter();
+  Hive.registerAdapter(AlarmAdapter());
 
   runApp(const NothingClock());
 }

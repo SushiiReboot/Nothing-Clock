@@ -48,11 +48,20 @@ dependencies:
   timezone: ^0.9.4
   url_launcher: ^6.3.0
   worldtime: ^1.2.2
+  hive: ^2.0.0
+  hive_flutter: ^1.1.0
+  hive_generator: ^1.1.0
+  path_provider: ^2.0.0
+  freezed_annotation: ^2.1.0
+  injectable: ^2.0.0
+  flutter_bloc: ^8.0.1
 
 dev_dependencies:
   flutter_lints: ^4.0.0
   flutter_test:
     sdk: flutter
+  build_runner: ^2.1.0
+  freezed: ^2.1.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

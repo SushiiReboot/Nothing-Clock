@@ -1,10 +1,31 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:nothing_clock/models/alarm.dart';
 import 'package:nothing_clock/providers/theme_provider.dart';
+import 'package:nothing_clock/services/alarms_service.dart';
 import 'package:nothing_clock/widgets/switch_button.dart';
 import 'package:provider/provider.dart';
 
-class AlarmsScreen extends StatelessWidget {
+class AlarmsScreen extends StatefulWidget {
   const AlarmsScreen({super.key});
+
+  @override
+  State<AlarmsScreen> createState() => _AlarmsScreenState();
+}
+
+class _AlarmsScreenState extends State<AlarmsScreen> {
+  List<Alarm> _alarms = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAlarms();
+  }
+
+  void _loadAlarms() async {
+    _alarms = await AlarmsService().loadAlarms();
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,52 +58,26 @@ class AlarmsScreen extends StatelessWidget {
                     const SizedBox(
                       height: 15,
                     ),
-                    SizedBox(
-                        height: 200,
-                        child: GridView.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 10,
-                                    mainAxisSpacing: 10),
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: 2,
-                            itemBuilder: (context, index) {
-                              return _buildAlarmBlock(
-                                  theme, index, alarmBlockSize, context);
-                            })),
-                    InkWell(
-                      onTap: () {
-                        showModalBottomSheet<void>(
-                            context: context,
-                            builder: (context) {
-                              return _buildModalBottomSheetUI(theme);
-                            });
-                      },
-                      child: Container(
-                        height: alarmBlockSize,
-                        width: alarmBlockSize,
-                        decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(
-                                color: themeProvider.isDarkMode
-                                    ? Colors.white
-                                    : theme.colorScheme.tertiary,
-                                width: 0.5),
-                            borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 22),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add,
-                                color: themeProvider.isDarkMode
-                                    ? Colors.white
-                                    : theme.colorScheme.tertiary),
-                          ],
-                        ),
-                      ),
-                    )
+                    SingleChildScrollView(
+                      child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 10,
+                                  mainAxisSpacing: 10),
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _alarms.length + 1, //Set to + 1 because we need to build the add alarm button
+                          shrinkWrap: true,
+                          itemBuilder: (context, index) {
+                            if (index == _alarms.length) { //It goes outside the array bounds, but it builds the add alarm button {
+                              return _buildAddAlarmButton(theme, alarmBlockSize,
+                                  themeProvider, context);
+                            }
+
+                            return _buildAlarmBlock(
+                                theme, _alarms[index], alarmBlockSize, context);
+                          }),
+                    ),
                   ],
                 )
               ],
@@ -93,7 +88,45 @@ class AlarmsScreen extends StatelessWidget {
     );
   }
 
+  InkWell _buildAddAlarmButton(ThemeData theme, double alarmBlockSize,
+      ThemeProvider themeProvider, BuildContext context) {
+    return InkWell(
+      onTap: () {
+        showModalBottomSheet<void>(
+            context: context,
+            builder: (context) {
+              return _buildModalBottomSheetUI(theme);
+            });
+      },
+      child: Container(
+        height: alarmBlockSize,
+        width: alarmBlockSize,
+        decoration: BoxDecoration(
+            color: Colors.transparent,
+            border: Border.all(
+                color: themeProvider.isDarkMode
+                    ? Colors.white
+                    : theme.colorScheme.tertiary,
+                width: 0.5),
+            borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add,
+                color: themeProvider.isDarkMode
+                    ? Colors.white
+                    : theme.colorScheme.tertiary),
+          ],
+        ),
+      ),
+    );
+  }
+
   Container _buildModalBottomSheetUI(ThemeData theme) {
+    DateTime selectedTime = DateTime.now();
+    List<bool> selectedDays = [false, false, false, false, false, false, false];
+
     return Container(
       decoration: BoxDecoration(
           color: theme.colorScheme.tertiary,
@@ -107,41 +140,76 @@ class AlarmsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("ALARMS"),
+            const Text("NEW ALARM"),
             const SizedBox(
               height: 20,
             ),
             Container(
               decoration: BoxDecoration(
-                border:
-                    Border.all(color: theme.colorScheme.secondary, width: 0.5),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Text(
-                  "18:26",
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontSize: 40, letterSpacing: 5),
-                ),
-              ),
+                  padding: const EdgeInsets.all(20.0),
+                  child: SizedBox(
+                    height: 150,
+                    child: CupertinoTheme(
+                      data: const CupertinoThemeData(
+                          textTheme: CupertinoTextThemeData(
+                              dateTimePickerTextStyle: TextStyle(
+                                  fontFamily: "Roboto",
+                                  fontWeight: FontWeight.w100))),
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.time,
+                        initialDateTime: DateTime.now(),
+                        onDateTimeChanged: (value) {
+                          selectedTime = value;
+                          debugPrint(
+                              "Set time to $value. Selected days are: $selectedDays");
+                        },
+                      ),
+                    ),
+                  )),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            AlarmsDaysList(
+              selectedDays: selectedDays,
             ),
             const SizedBox(
               height: 20,
             ),
-            const AlarmsDaysList()
+            TextButton(
+              onPressed: () {
+                Alarm alarm = Alarm(time: selectedTime, days: selectedDays);
+                AlarmsService().saveAlarmData(alarm);
+              },
+              style: TextButton.styleFrom(
+                  backgroundColor: theme.colorScheme.onPrimary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+              child: const Text(
+                "SAVE ALARM",
+                style: TextStyle(
+                    fontFamily: "Roboto", fontWeight: FontWeight.w500),
+              ),
+            )
           ],
         ),
       ),
     );
   }
 
-  Container _buildAlarmBlock(
-      ThemeData theme, int index, double alarmBlockSize, BuildContext context) {
-    List<String> testAlarmClocks = ["08:15", "09:15"];
-    List<String> testAlarmDays = ["MON, TUE", "MON, TUE, WED"];
-
+  Container _buildAlarmBlock(ThemeData theme, Alarm alarm,
+      double alarmBlockSize, BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+
+    String time = "${alarm.time.hour.toString().padLeft(2, '0')}:${alarm.time.minute.toString().padLeft(2, '0')}";
+    const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+    final activeDays = [for(var i = 0; i < days.length; i++) if(alarm.days[i]) days[i]].join(", ");
 
     return Container(
       width: 200,
@@ -156,7 +224,7 @@ class AlarmsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                testAlarmClocks[index],
+                time,
                 style:
                     theme.textTheme.titleLarge?.copyWith(color: Colors.white),
               ),
@@ -164,7 +232,7 @@ class AlarmsScreen extends StatelessWidget {
                 height: 10,
               ),
               Text(
-                testAlarmDays[index],
+                activeDays.isEmpty ? "EVERYDAY" : activeDays,
                 style: TextStyle(color: theme.colorScheme.onTertiary),
               ),
             ],
@@ -236,7 +304,10 @@ class AlarmsScreen extends StatelessWidget {
 class AlarmsDaysList extends StatelessWidget {
   const AlarmsDaysList({
     super.key,
+    required this.selectedDays,
   });
+
+  final List<bool> selectedDays;
 
   @override
   Widget build(BuildContext context) {
@@ -251,29 +322,43 @@ class AlarmsDaysList extends StatelessWidget {
               style: theme.textTheme.labelLarge
                   ?.copyWith(color: const Color.fromARGB(255, 163, 163, 163))),
         ),
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AlarmDayBtn(
               dayInital: "M",
+              dayIndex: 0,
+              selectedDays: selectedDays,
             ),
             AlarmDayBtn(
               dayInital: "T",
+              dayIndex: 1,
+              selectedDays: selectedDays,
             ),
             AlarmDayBtn(
               dayInital: "W",
+              dayIndex: 2,
+              selectedDays: selectedDays,
             ),
             AlarmDayBtn(
               dayInital: "T",
+              dayIndex: 3,
+              selectedDays: selectedDays,
             ),
             AlarmDayBtn(
               dayInital: "F",
+              dayIndex: 4,
+              selectedDays: selectedDays,
             ),
             AlarmDayBtn(
               dayInital: "S",
+              dayIndex: 5,
+              selectedDays: selectedDays,
             ),
             AlarmDayBtn(
               dayInital: "S",
+              dayIndex: 6,
+              selectedDays: selectedDays,
             ),
           ],
         )
@@ -286,9 +371,13 @@ class AlarmDayBtn extends StatefulWidget {
   const AlarmDayBtn({
     super.key,
     required this.dayInital,
+    required this.dayIndex,
+    required this.selectedDays,
   });
 
   final String dayInital;
+  final int dayIndex;
+  final List<bool> selectedDays;
 
   @override
   State<AlarmDayBtn> createState() => _AlarmDayBtnState();
@@ -304,6 +393,7 @@ class _AlarmDayBtnState extends State<AlarmDayBtn> {
     onSelect() {
       setState(() {
         _isSelected = !_isSelected;
+        widget.selectedDays[widget.dayIndex] = _isSelected;
       });
     }
 
