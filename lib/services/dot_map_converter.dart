@@ -24,7 +24,7 @@ class DotMapConverter {
     return Offset(xScaledKyiv, yScaledKyiv);
   }
 }
-
+ 
 class SphericalMercator {
   static const double radiusMajor =
       6378137.0; // Earth's radius in meters for WGS84

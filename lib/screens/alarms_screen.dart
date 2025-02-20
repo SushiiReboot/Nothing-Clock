@@ -249,6 +249,9 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
               child: SwitchButton(
                 onChanged: () {
                   alarm.isEnabled = !alarm.isEnabled;
+                  if(alarm.isEnabled) {
+                    AlarmsService().scheduleAlarmAt(alarm);
+                  }
                   debugPrint("Alarm with time: $time is now ${alarm.isEnabled}");
                 },
                 inactiveThumbColor: themeProvider.isDarkMode

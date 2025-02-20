@@ -13,6 +13,7 @@ import 'package:nothing_clock/services/time_country.dart';
 import 'package:nothing_clock/theme/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,8 @@ void main() async {
 
   await Hive.initFlutter();
   Hive.registerAdapter(AlarmAdapter());
+
+  AndroidAlarmManager.initialize();
 
   runApp(const NothingClock());
 }

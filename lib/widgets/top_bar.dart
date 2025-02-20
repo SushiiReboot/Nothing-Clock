@@ -71,7 +71,7 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
             },
           ),
         ],
-        leading: IconButton(
+        leading: _tabController.index == 0 ? IconButton(
             onPressed: () {
               Navigator.push(
                   context,
@@ -79,7 +79,7 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
                     builder: (context) => const CitySearchScreen(),
                   ));
             },
-            icon: const Icon(Icons.add)),
+            icon: const Icon(Icons.add)) : const SizedBox.shrink(),
         title: TabBar(
           onTap: (value) {
             setState(() {

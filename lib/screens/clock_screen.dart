@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:nothing_clock/models/alarm.dart';
 import 'package:nothing_clock/models/world_clock_data.dart';
 import 'package:nothing_clock/providers/location_provider.dart';
 import 'package:nothing_clock/providers/page_provider.dart';
 import 'package:nothing_clock/providers/theme_provider.dart';
 import 'package:nothing_clock/providers/worldclocks_provider.dart';
+import 'package:nothing_clock/services/alarms_service.dart';
 import 'package:nothing_clock/widgets/clock_stream_widget.dart';
+import 'package:nothing_clock/widgets/exact_alarm_request_popup.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/world_map.dart';
 import 'package:provider/provider.dart';
@@ -24,7 +27,60 @@ class ClockScreen extends StatefulWidget {
   State<ClockScreen> createState() => _ClockScreenState();
 }
 
-class _ClockScreenState extends State<ClockScreen> {
+class _ClockScreenState extends State<ClockScreen> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowExactAlarmPopupRequest();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkAndShowExactAlarmPopupRequest();
+    }
+  }
+
+  Future<bool> _checkExactAlarmPermission() async {
+    bool canSchedule = await AlarmsService().canScheduleExactAlarms();
+    return canSchedule;
+  }
+
+  Future<void> _checkAndShowExactAlarmPopupRequest() async {
+    bool shouldShow = !(await _checkExactAlarmPermission());
+
+    if (shouldShow) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Alarm Permission Required"),
+            content: const Text(
+                "To schedule alarms, please enable the SCHEDULE_EXACT_ALARM permission in your system settings."),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    AlarmsService.openExactAlarmSettings();
+                    Navigator.pop(context);
+                    debugPrint("Opening exact alarm settings");
+                  },
+                  child: const Text("Go to settings"))
+            ],
+          );
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
