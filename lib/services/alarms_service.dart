@@ -19,11 +19,11 @@ class AlarmsService {
     final box = await Hive.openBox<Alarm>('alarms');
     await box.add(alarm); 
 
-    loadAlarms(resetCache: true);
+    loadAlarms();
   }
 
-  Future<List<Alarm>> loadAlarms({bool resetCache = false}) async {
-    if(_cachedAlarams != null && !resetCache) {
+  Future<List<Alarm>> loadAlarms() async {
+    if(_cachedAlarams != null) {
       return _cachedAlarams!;
     }
 

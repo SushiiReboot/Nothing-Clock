@@ -180,9 +180,15 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
               height: 20,
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Alarm alarm = Alarm(time: selectedTime, days: selectedDays);
                 AlarmsService().saveAlarmData(alarm);
+
+                List<Alarm> updatedAlarms = await AlarmsService().loadAlarms(); 
+                setState(() {
+                  _alarms = updatedAlarms;
+                });
+                Navigator.pop(context);
               },
               style: TextButton.styleFrom(
                   backgroundColor: theme.colorScheme.onPrimary,
@@ -241,6 +247,10 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
               top: alarmBlockSize - 80,
               left: 75,
               child: SwitchButton(
+                onChanged: () {
+                  alarm.isEnabled = !alarm.isEnabled;
+                  debugPrint("Alarm with time: $time is now ${alarm.isEnabled}");
+                },
                 inactiveThumbColor: themeProvider.isDarkMode
                     ? theme.colorScheme.onSurface
                     : theme.colorScheme.surface,
