@@ -56,6 +56,7 @@ dependencies:
   injectable: ^2.0.0
   flutter_bloc: ^8.0.1
   android_alarm_manager_plus: ^4.0.6
+  flutter_secure_storage: ^9.2.4
 
 dev_dependencies:
   flutter_lints: ^4.0.0

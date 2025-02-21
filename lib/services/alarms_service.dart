@@ -31,18 +31,16 @@ class AlarmsService {
     }
   }
 
-  Future<void> saveAlarms(List<Map<String, dynamic>> alarms) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> alarmsStrings =
-        alarms.map((alarm) => jsonEncode(alarm)).toList();
-    await prefs.setStringList("alarms", alarmsStrings);
-  }
-
   Future<void> saveAlarmData(Alarm alarm) async {
     final box = await Hive.openBox<Alarm>('alarms');
     await box.add(alarm); 
 
+    _cachedAlarams?.add(alarm);
     loadAlarms();
+  }
+
+  int getNumberOfAlarms() {
+    return _cachedAlarams?.length ?? 0;
   }
 
   Future<List<Alarm>> loadAlarms() async {

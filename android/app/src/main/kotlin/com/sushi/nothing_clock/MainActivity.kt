@@ -1,4 +1,4 @@
-package com.example.nothing_clock
+package com.sushi.nothing_clock
 
 import android.app.AlarmManager
 import android.content.BroadcastReceiver
