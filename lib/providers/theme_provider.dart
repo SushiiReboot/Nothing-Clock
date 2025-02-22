@@ -7,7 +7,7 @@ class ThemeProvider with ChangeNotifier {
   String get currentTheme => _isDarkMode ? 'Dark' : 'Light';
 
   ThemeProvider() {
-    _loadThemeFromPreferences();
+    loadThemeFromPreferences();
   }
 
   void initializeTheme(BuildContext context) {
@@ -18,10 +18,12 @@ class ThemeProvider with ChangeNotifier {
 
   bool get isDarkMode => _isDarkMode;
 
-  Future<void> _loadThemeFromPreferences() async {
+  Future<bool> loadThemeFromPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     notifyListeners();
+
+    return _isDarkMode;
   }
 
   Future<void> _saveThemeToPreferences() async {

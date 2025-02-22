@@ -11,6 +11,7 @@ import 'package:nothing_clock/screens/router.dart' as RouterPage;
 import 'package:nothing_clock/services/time_country.dart';
 import 'package:nothing_clock/theme/theme.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 
@@ -26,11 +27,15 @@ void main() async {
 
   AndroidAlarmManager.initialize();
 
-  runApp(const NothingClock());
+  final theme = await ThemeProvider().loadThemeFromPreferences();
+  final themeMode = theme ? AppTheme.dark : AppTheme.light;
+  runApp(NothingClock(theme: themeMode));
 }
 
 class NothingClock extends StatelessWidget {
-  const NothingClock({super.key});
+  const NothingClock({super.key, required this.theme});
+
+  final ThemeData theme;
 
   // This widget is the root of your application.
   @override
@@ -43,16 +48,13 @@ class NothingClock extends StatelessWidget {
         ChangeNotifierProvider(
             create: (context) => WorldClocksProvider(context))
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) => MaterialApp(
-          title: 'Nothing Clock',
-          debugShowCheckedModeBanner: false,
-          darkTheme: AppTheme.dark,
-          theme: AppTheme.light,
-          themeMode:
-              themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: const RouterPage.Router(),
-        ),
+      child: MaterialApp(
+        title: 'Nothing Clock',
+        debugShowCheckedModeBanner: false,
+        darkTheme: AppTheme.dark,
+        theme: AppTheme.light,
+        themeMode: theme == AppTheme.dark ? ThemeMode.dark : ThemeMode.light,
+        home: const RouterPage.Router(),
       ),
     );
   }
