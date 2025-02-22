@@ -202,22 +202,10 @@ class _LocationInfoState extends State<LocationInfo> {
     locationManager = LocationManager();
   }
 
-  Future<String> _getTimeZoneOffset() async {
-    if (locationManager.currentPosition?.latitude != null &&
-        locationManager.currentPosition?.longitude != null) {
-      final value = await Worldtime().timeByLocation(
-        latitude: locationManager.currentPosition!.latitude,
-        longitude: locationManager.currentPosition!.longitude,
-      );
-      return "${value.timeZoneOffset.inHours > 0 ? "+" : ""}${value.timeZoneOffset.inHours}";
-    }
-    return "0"; // Default offset if location is not available
-  }
-
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
-    
+
     return Column(
       children: [
         FutureBuilder(
@@ -226,37 +214,27 @@ class _LocationInfoState extends State<LocationInfo> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return LoadingAnimationWidget.horizontalRotatingDots(
                   color: theme.colorScheme.onSurface, size: 15);
-            } else if (snapshot.hasError || locationManager.currentPosition?.placemark?.locality == null) {
+            } else if (snapshot.hasError ||
+                locationManager.currentPosition?.placemark?.locality == null) {
+              debugPrint("Error: ${snapshot.error}");
+              debugPrint(
+                  "Place: ${locationManager.currentPosition?.placemark}");
               return const Text("No location available");
             } else {
-          // Once location is available, wait for the timezone offset.
-          return FutureBuilder<String>(
-            future: _getTimeZoneOffset(),
-            builder: (context, tzSnapshot) {
-              if (tzSnapshot.connectionState == ConnectionState.waiting) {
-                return LoadingAnimationWidget.horizontalRotatingDots(
-                    color: theme.colorScheme.onSurface, size: 15);
-              } else if (tzSnapshot.hasError || tzSnapshot.data == "0") {
-                return const Text("No location available");
-              } else {
-                final offset = tzSnapshot.data!;
-                return Column(
-                  children: [
-                    Text(
-                      "${locationManager.currentPosition?.placemark?.locality} | UTC $offset",
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    Text(
-                      "${locationManager.currentPosition?.latitude}, ${locationManager.currentPosition?.longitude}",
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurface.withOpacity(0.8)),
-                    )
-                  ],
-                );
-              }
-            },
-          );
+              return Column(
+                children: [
+                  Text(
+                    "${locationManager.currentPosition?.placemark?.locality} | UTC ${locationManager.currentPosition?.utcOffset}",
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  Text(
+                    "${locationManager.currentPosition?.latitude}, ${locationManager.currentPosition?.longitude}",
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.8)),
+                  )
+                ],
+              );
             }
           },
           // builder: (context, snapshot) {
@@ -265,7 +243,7 @@ class _LocationInfoState extends State<LocationInfo> {
           //     return const Text("No location available");
           //   } else {
           //     final offset = snapshot.data ?? "0";
-        
+
           //     if (location.currentPosition?.placemark?.locality == null ||
           //         location.currentPosition?.latitude == null ||
           //         location.currentPosition?.longitude == null ||
@@ -273,7 +251,7 @@ class _LocationInfoState extends State<LocationInfo> {
           //       return LoadingAnimationWidget.horizontalRotatingDots(
           //           color: theme.colorScheme.onSurface, size: 15);
           //     }
-        
+
           //     return Column(
           //       children: [
           //         Text(

@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:nothing_clock/models/user_position.dart';
+import 'package:worldtime/worldtime.dart';
 
 /// A service class that handles retrieving and saving user location data,
 /// including determining the current position and converting coordinates to an address.
@@ -22,7 +23,9 @@ class LocationManager {
   /// The constructor automatically calls [_initializeLocation] to load any cached location
   /// data or refresh it if necessary.
   LocationManager._internal() {
-    initialization = _initializeLocation();
+    if (currentPosition == null) {
+      initialization = _initializeLocation();
+    }
   }
 
   factory LocationManager() {
@@ -46,9 +49,12 @@ class LocationManager {
         throw Exception("No placemarks found for the provided coordinates.");
       }
 
+      int? utcOffset = await _getUtcOffset(position.latitude, position.longitude);
+
       return UserPosition(
           latitude: position.latitude,
           longitude: position.longitude,
+          utcOffset: utcOffset,
           placemark: placeMarks.first);
     } catch (e) {
       throw Exception("Failed to retrieve address: $e");
@@ -59,19 +65,25 @@ class LocationManager {
   ///
   /// The data is stored as strings using [FlutterSecureStorage].
   Future<void> saveLocation(UserPosition position) async {
-    const FlutterSecureStorage storage = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
+    const FlutterSecureStorage storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true));
     await storage.write(key: "latitude", value: position.latitude.toString());
     await storage.write(key: "longitude", value: position.longitude.toString());
-    await storage.write(key: "placemark", value: UserPosition.serializePlacemark(position.placemark));
+    await storage.write(
+        key: "placemark",
+        value: UserPosition.serializePlacemark(position.placemark));
+    await storage.write(key: "utcOffset", value: position.utcOffset.toString());
   }
 
   /// Loads the user's saved location from secure storage and returns it as a [UserPosition].
   ///
   /// If no location data is found, returns a [UserPosition] with null latitude and longitude.
   Future<UserPosition> loadLocation() async {
-    const FlutterSecureStorage storage = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
+    const FlutterSecureStorage storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true));
     String? latitude = await storage.read(key: "latitude");
     String? longitude = await storage.read(key: "longitude");
+    String? utcOffset = await storage.read(key: "utcOffset");
     String? placemarkString = await storage.read(key: "placemark");
 
     Placemark? placemark;
@@ -79,15 +91,35 @@ class LocationManager {
       placemark = UserPosition.deserializePlacemark(placemarkString);
     }
 
-    if (latitude == null || longitude == null) {
-      return UserPosition(
-          latitude: null, longitude: null, placemark: placemark);
+    if (latitude == null || longitude == null || utcOffset == null) {
+      UserPosition userPosition = UserPosition(
+          latitude: null, longitude: null, placemark: placemark, utcOffset: 0);
+
+      _currentPosition = userPosition;
+      return userPosition;
     }
 
-    return UserPosition(
+    UserPosition userPosition = UserPosition(
         latitude: double.parse(latitude),
         longitude: double.parse(longitude),
+        utcOffset: int.parse(utcOffset),
         placemark: placemark);
+
+    _currentPosition = userPosition;
+    return userPosition;
+  }
+
+  Future<int?> _getUtcOffset(double latitude, double longitude) async {
+    if(_currentPosition?.utcOffset != null) {
+      return _currentPosition?.utcOffset!;
+    }
+
+    final value = await Worldtime().timeByLocation(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    return value.timeZoneOffset.inHours;
   }
 
   /// Determines the user's current [Position] by checking the location service
@@ -135,8 +167,7 @@ class LocationManager {
   Future<void> _initializeLocation() async {
     final cached = await loadLocation();
 
-    if(cached.latitude != null && cached.longitude != null) {
-
+    if (cached.latitude != null && cached.longitude != null) {
       _currentPosition = cached;
       debugPrint("Loaded cached location: $_currentPosition");
 
@@ -154,8 +185,7 @@ class LocationManager {
   /// for future use. If an error occurs during this process, it logs the error.
   Future<void> _refreshLocation() async {
     try {
-      final locationAddress =
-          await getAddressFromLatLng(null);
+      final locationAddress = await getAddressFromLatLng(null);
       _currentPosition = locationAddress;
 
       await saveLocation(_currentPosition!);

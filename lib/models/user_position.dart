@@ -15,8 +15,10 @@ class UserPosition {
   /// An optional [Placemark] containing address details for the position.
   final Placemark? placemark;
 
+  final int? utcOffset;
+
   /// Creates a [UserPosition] with the given [latitude], [longitude], and an optional [placemark].
-  UserPosition({this.placemark, required this.latitude, required this.longitude});
+  UserPosition({this.placemark, this.utcOffset, required this.latitude, required this.longitude});
 
   /// Creates a [UserPosition] from a JSON [Map].
   ///
