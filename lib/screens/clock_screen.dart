@@ -240,36 +240,6 @@ class _LocationInfoState extends State<LocationInfo> {
               );
             }
           },
-          // builder: (context, snapshot) {
-          //   if (snapshot.hasError) {
-          //     debugPrint("Error: ${snapshot.error}");
-          //     return const Text("No location available");
-          //   } else {
-          //     final offset = snapshot.data ?? "0";
-
-          //     if (location.currentPosition?.placemark?.locality == null ||
-          //         location.currentPosition?.latitude == null ||
-          //         location.currentPosition?.longitude == null ||
-          //         offset == "0") {
-          //       return LoadingAnimationWidget.horizontalRotatingDots(
-          //           color: theme.colorScheme.onSurface, size: 15);
-          //     }
-
-          //     return Column(
-          //       children: [
-          //         Text(
-          //           "${location.currentPosition?.placemark?.locality} | UTC $offset",
-          //           style: const TextStyle(fontSize: 16),
-          //         ),
-          //         Text(
-          //           "${location.currentPosition?.latitude}, ${location.currentPosition?.longitude}",
-          //           style: TextStyle(
-          //               fontSize: 12,
-          //               color: theme.colorScheme.onSurface.withOpacity(0.8)),
-          //         )
-          //       ],
-          //     );
-          //   }
         ),
       ],
     );

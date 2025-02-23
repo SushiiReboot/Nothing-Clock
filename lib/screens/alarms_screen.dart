@@ -96,6 +96,7 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
       onTap: () {
         showModalBottomSheet<void>(
             context: context,
+            isScrollControlled: true,
             builder: (context) {
               return _buildModalBottomSheetUI(theme);
             });
@@ -134,77 +135,85 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
           color: theme.colorScheme.tertiary,
           borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20), topRight: Radius.circular(20))),
-      height: 500,
+      constraints:
+          BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
       width: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 50),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("NEW ALARM"),
-            const SizedBox(
-              height: 20,
-            ),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.only(
+              left: 10,
+              right: 10,
+              top: 50,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("ADD NEW ALARM"),
+              const SizedBox(
+                height: 20,
               ),
-              child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: SizedBox(
-                    height: 150,
-                    child: CupertinoTheme(
-                      data: const CupertinoThemeData(
-                          textTheme: CupertinoTextThemeData(
-                              dateTimePickerTextStyle: TextStyle(
-                                  fontFamily: "Roboto",
-                                  fontWeight: FontWeight.w100))),
-                      child: CupertinoDatePicker(
-                        mode: CupertinoDatePickerMode.time,
-                        initialDateTime: DateTime.now(),
-                        onDateTimeChanged: (value) {
-                          selectedTime = value;
-                          debugPrint(
-                              "Set time to $value. Selected days are: $selectedDays");
-                        },
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: SizedBox(
+                      height: 150,
+                      child: CupertinoTheme(
+                        data: const CupertinoThemeData(
+                            textTheme: CupertinoTextThemeData(
+                                dateTimePickerTextStyle: TextStyle(
+                                    fontFamily: "Roboto",
+                                    fontWeight: FontWeight.w100))),
+                        child: CupertinoDatePicker(
+                          mode: CupertinoDatePickerMode.time,
+                          initialDateTime: DateTime.now(),
+                          onDateTimeChanged: (value) {
+                            selectedTime = value;
+                            debugPrint(
+                                "Set time to $value. Selected days are: $selectedDays");
+                          },
+                        ),
                       ),
-                    ),
-                  )),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            AlarmsDaysList(
-              selectedDays: selectedDays,
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            TextButton(
-              onPressed: () async {
-                Alarm alarm = Alarm(time: selectedTime, days: selectedDays);
-                AlarmsService().saveAlarmData(alarm);
-
-                List<Alarm> updatedAlarms = await AlarmsService().loadAlarms();
-                setState(() {
-                  _alarms = updatedAlarms;
-                });
-                Navigator.pop(context);
-              },
-              style: TextButton.styleFrom(
-                  backgroundColor: theme.colorScheme.onPrimary,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10))),
-              child: const Text(
-                "SAVE ALARM",
-                style: TextStyle(
-                    fontFamily: "Roboto", fontWeight: FontWeight.w500),
+                    )),
               ),
-            )
-          ],
+              const SizedBox(
+                height: 10,
+              ),
+              AlarmsDaysList(
+                selectedDays: selectedDays,
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              TextButton(
+                onPressed: () async {
+                  Alarm alarm = Alarm(time: selectedTime, days: selectedDays);
+                  AlarmsService().saveAlarmData(alarm);
+
+                  List<Alarm> updatedAlarms =
+                      await AlarmsService().loadAlarms();
+                  setState(() {
+                    _alarms = updatedAlarms;
+                  });
+                  Navigator.pop(context);
+                },
+                style: TextButton.styleFrom(
+                    backgroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10))),
+                child: const Text(
+                  "SAVE ALARM",
+                  style: TextStyle(
+                      fontFamily: "Roboto", fontWeight: FontWeight.w500),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -324,13 +333,58 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
   }
 }
 
-class AlarmsDaysList extends StatelessWidget {
+class AlarmsDaysList extends StatefulWidget {
   const AlarmsDaysList({
     super.key,
     required this.selectedDays,
   });
 
   final List<bool> selectedDays;
+
+  @override
+  State<AlarmsDaysList> createState() => _AlarmsDaysListState();
+}
+
+class _AlarmsDaysListState extends State<AlarmsDaysList> {
+  String scheduledMessage = "Not scheduled";
+  bool isScheduled = false;
+
+  static const _dayLetters = ["M", "T", "W", "T", "F", "S", "S"];
+
+  void _changeScheduledMessage() {
+    Map<int, bool> scheduledDays = _getScheduledDays();
+
+    debugPrint(scheduledDays.toString());
+
+    if (scheduledDays.containsKey(-1) && isScheduled) {
+      scheduledMessage = "Today";
+      return;
+    }
+
+    if (!isScheduled) {
+      scheduledMessage = "Not scheduled";
+      return;
+    }
+
+    scheduledMessage = scheduledDays.keys.map((day) {
+      return ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"][day];
+    }).join(", ");
+  }
+
+  //This method is used to check if any day is selected. If so, the alarm is scheduled for a specific day
+  Map<int, bool> _getScheduledDays() {
+    // Filter to get only entries with true values.
+    final trueEntries =
+        widget.selectedDays.asMap().entries.where((entry) => entry.value);
+
+    // If at least one true exists, return the corresponding map.
+    if (trueEntries.isNotEmpty) {
+      return Map<int, bool>.fromEntries(trueEntries);
+    }
+
+    // Otherwise, return a map with -1 and false.
+    return {-1: false};
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -341,50 +395,43 @@ class AlarmsDaysList extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 15, left: 10),
-          child: Text("DAYS",
-              style: theme.textTheme.labelLarge
-                  ?.copyWith(color: const Color.fromARGB(255, 163, 163, 163))),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(scheduledMessage,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                      color: const Color.fromARGB(255, 163, 163, 163))),
+              SwitchButton(
+                onChanged: () {
+                  setState(() {
+                    isScheduled = !isScheduled;
+                    _changeScheduledMessage();
+                  });
+                },
+                inactiveTrackColor: Colors.transparent,
+                activeTrackColor: Colors.transparent,
+                outlineColor: Colors.white,
+                inactiveThumbColor: Colors.white,
+              )
+            ],
+          ),
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AlarmDayBtn(
-              dayInital: "M",
-              dayIndex: 0,
-              selectedDays: selectedDays,
-            ),
-            AlarmDayBtn(
-              dayInital: "T",
-              dayIndex: 1,
-              selectedDays: selectedDays,
-            ),
-            AlarmDayBtn(
-              dayInital: "W",
-              dayIndex: 2,
-              selectedDays: selectedDays,
-            ),
-            AlarmDayBtn(
-              dayInital: "T",
-              dayIndex: 3,
-              selectedDays: selectedDays,
-            ),
-            AlarmDayBtn(
-              dayInital: "F",
-              dayIndex: 4,
-              selectedDays: selectedDays,
-            ),
-            AlarmDayBtn(
-              dayInital: "S",
-              dayIndex: 5,
-              selectedDays: selectedDays,
-            ),
-            AlarmDayBtn(
-              dayInital: "S",
-              dayIndex: 6,
-              selectedDays: selectedDays,
-            ),
-          ],
-        )
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: widget.selectedDays.asMap().entries.map((entry) {
+              return AlarmDayBtn(
+                dayInital: _dayLetters[entry.key],
+                dayIndex: entry.key,
+                selectedDays: widget.selectedDays,
+                onPressed: () {
+                  setState(() {
+                    _changeScheduledMessage();
+                  });
+                },
+                isEnabled: isScheduled,
+                isSelected: entry.value,
+              );
+            }).toList())
       ],
     );
   }
@@ -396,11 +443,16 @@ class AlarmDayBtn extends StatefulWidget {
     required this.dayInital,
     required this.dayIndex,
     required this.selectedDays,
+    this.onPressed,
+    required this.isEnabled, required this.isSelected,
   });
 
   final String dayInital;
   final int dayIndex;
   final List<bool> selectedDays;
+  final VoidCallback? onPressed;
+  final bool isEnabled;
+  final bool isSelected;
 
   @override
   State<AlarmDayBtn> createState() => _AlarmDayBtnState();
@@ -410,6 +462,28 @@ class _AlarmDayBtnState extends State<AlarmDayBtn> {
   bool _isSelected = false;
 
   @override
+  void initState() {
+    super.initState();
+    _isSelected = widget.isSelected;
+    debugPrint("Day ${widget.dayInital} is selected: $_isSelected");
+  }
+
+    @override
+  void didUpdateWidget(covariant AlarmDayBtn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnabled != widget.isEnabled) {
+      setState(() {
+        if(!widget.isEnabled) {
+          _isSelected = false;
+          return;
+        }
+
+        _isSelected = widget.isSelected;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
@@ -417,13 +491,17 @@ class _AlarmDayBtnState extends State<AlarmDayBtn> {
       setState(() {
         _isSelected = !_isSelected;
         widget.selectedDays[widget.dayIndex] = _isSelected;
+
+        if (widget.onPressed != null) {
+          widget.onPressed!();
+        }
       });
     }
 
     return Padding(
       padding: const EdgeInsets.only(right: 5.0),
       child: Material(
-          color: _isSelected ? theme.colorScheme.primary : Colors.transparent,
+          color: _isSelected && widget.isEnabled ? theme.colorScheme.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(50),
           child: Container(
             width: 50,
@@ -436,7 +514,7 @@ class _AlarmDayBtnState extends State<AlarmDayBtn> {
                         : theme.colorScheme.secondary,
                     width: _isSelected ? 0 : 0.5)),
             child: InkWell(
-                onTap: onSelect,
+                onTap: widget.isEnabled ? onSelect : null,
                 radius: 50,
                 borderRadius: BorderRadius.circular(50),
                 child: Center(child: Text(widget.dayInital.toUpperCase()))),
