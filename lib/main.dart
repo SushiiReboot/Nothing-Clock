@@ -45,15 +45,19 @@ void main() async {
   AndroidAlarmManager.initialize();
   await NotificationService.initialize();
 
-  final theme = await ThemeProvider().loadThemeFromPreferences();
-  final themeMode = theme ? AppTheme.dark : AppTheme.light;
-  runApp(NothingClock(theme: themeMode));
+  final themeProvider = ThemeProvider();
+  await themeProvider.loadThemeFromPreferences();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => themeProvider,
+      child: const NothingClock(),
+    ),
+  );
 }
 
 class NothingClock extends StatelessWidget {
-  const NothingClock({super.key, required this.theme});
-
-  final ThemeData theme;
+  const NothingClock({super.key});
 
   // This widget is the root of your application.
   @override
@@ -66,14 +70,16 @@ class NothingClock extends StatelessWidget {
         ChangeNotifierProvider(
             create: (context) => WorldClocksProvider(context))
       ],
-      child: MaterialApp(
-        title: 'Nothing Clock',
-        debugShowCheckedModeBanner: false,
-        darkTheme: AppTheme.dark,
-        theme: AppTheme.light,
-        themeMode: theme == AppTheme.dark ? ThemeMode.dark : ThemeMode.light,
-        home: const RouterPage.Router(),
-      ),
+      child: Consumer<ThemeProvider>(builder: (context, value, child) {
+        return MaterialApp(
+          title: 'Nothing Clock',
+          debugShowCheckedModeBanner: false,
+          darkTheme: AppTheme.dark,
+          theme: AppTheme.light,
+          themeMode: value.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          home: const RouterPage.Router(),
+        );
+      },)
     );
   }
 }
