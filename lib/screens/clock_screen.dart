@@ -10,12 +10,11 @@ import 'package:nothing_clock/providers/theme_provider.dart';
 import 'package:nothing_clock/providers/worldclocks_provider.dart';
 import 'package:nothing_clock/services/alarms_service.dart';
 import 'package:nothing_clock/services/location_manager.dart';
-import 'package:nothing_clock/services/notification_service.dart';
+import 'package:nothing_clock/services/permission_manager.dart';
 import 'package:nothing_clock/widgets/clock_stream_widget.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/world_map.dart';
 import 'package:provider/provider.dart';
-import 'package:worldtime/worldtime.dart';
 
 import '../widgets/info_display_clock.dart';
 
@@ -39,6 +38,7 @@ class _ClockScreenState extends State<ClockScreen> with WidgetsBindingObserver {
     });
 
     _loadAlarms();
+    PermissionManager().requestMultiplePermissions();
   }
 
   @override
@@ -201,8 +201,6 @@ class _LocationInfoState extends State<LocationInfo> {
   void initState() {
     super.initState();
     locationManager = LocationManager();
-
-    NotificationService().checkAndRequestNotificationPermission();
   }
 
   @override

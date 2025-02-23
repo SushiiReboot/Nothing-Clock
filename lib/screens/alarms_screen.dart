@@ -128,7 +128,15 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
 
   Container _buildModalBottomSheetUI(ThemeData theme) {
     DateTime selectedTime = DateTime.now();
-    List<bool> selectedDays = [false, false, false, false, false, false, false];
+    Map<String, bool> selectedDays = {
+      "MON": false,
+      "TUE": false,
+      "WED": false,
+      "THU": false,
+      "FRI": false,
+      "SAT": false,
+      "SUN": false
+    };
 
     return Container(
       decoration: BoxDecoration(
@@ -229,7 +237,7 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
 
     final activeDays = [
       for (var i = 0; i < days.length; i++)
-        if (alarm.days[i]) days[i]
+        if (alarm.days[days[i]] ?? false) days[i]
     ].join(", ");
 
     return Container(
@@ -267,6 +275,8 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
                   alarm.isEnabled = !alarm.isEnabled;
                   if (alarm.isEnabled) {
                     AlarmsService().scheduleAlarmAt(alarm);
+                  } else {
+                    AlarmsService().cancelAlarm(alarm);
                   }
                   alarm.save();
 
@@ -339,7 +349,7 @@ class AlarmsDaysList extends StatefulWidget {
     required this.selectedDays,
   });
 
-  final List<bool> selectedDays;
+  final Map<String, bool> selectedDays;
 
   @override
   State<AlarmsDaysList> createState() => _AlarmsDaysListState();
@@ -349,41 +359,28 @@ class _AlarmsDaysListState extends State<AlarmsDaysList> {
   String scheduledMessage = "Not scheduled";
   bool isScheduled = false;
 
-  static const _dayLetters = ["M", "T", "W", "T", "F", "S", "S"];
+  static const List<String> orderedDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
 
   void _changeScheduledMessage() {
-    Map<int, bool> scheduledDays = _getScheduledDays();
-
-    debugPrint(scheduledDays.toString());
-
-    if (scheduledDays.containsKey(-1) && isScheduled) {
-      scheduledMessage = "Today";
-      return;
+    // Build a map of selected days using indices corresponding to orderedDays
+    Map<int, bool> scheduledDays = {};
+    for (int i = 0; i < orderedDays.length; i++) {
+      if (widget.selectedDays[orderedDays[i]] ?? false) {
+        scheduledDays[i] = true;
+      }
     }
+    debugPrint(scheduledDays.toString());
 
     if (!isScheduled) {
       scheduledMessage = "Not scheduled";
-      return;
+    } else if (scheduledDays.isEmpty) {
+      scheduledMessage = "Today";
+    } else {
+      scheduledMessage = scheduledDays.keys.map((index) {
+        return orderedDays[index];
+      }).join(", ");
     }
-
-    scheduledMessage = scheduledDays.keys.map((day) {
-      return ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"][day];
-    }).join(", ");
-  }
-
-  //This method is used to check if any day is selected. If so, the alarm is scheduled for a specific day
-  Map<int, bool> _getScheduledDays() {
-    // Filter to get only entries with true values.
-    final trueEntries =
-        widget.selectedDays.asMap().entries.where((entry) => entry.value);
-
-    // If at least one true exists, return the corresponding map.
-    if (trueEntries.isNotEmpty) {
-      return Map<int, bool>.fromEntries(trueEntries);
-    }
-
-    // Otherwise, return a map with -1 and false.
-    return {-1: false};
   }
 
   @override
@@ -418,10 +415,10 @@ class _AlarmsDaysListState extends State<AlarmsDaysList> {
         ),
         Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: widget.selectedDays.asMap().entries.map((entry) {
+            children: orderedDays.map((day) {
               return AlarmDayBtn(
-                dayInital: _dayLetters[entry.key],
-                dayIndex: entry.key,
+                dayInital: day.substring(0, 1),
+                dayKey: day,
                 selectedDays: widget.selectedDays,
                 onPressed: () {
                   setState(() {
@@ -429,7 +426,7 @@ class _AlarmsDaysListState extends State<AlarmsDaysList> {
                   });
                 },
                 isEnabled: isScheduled,
-                isSelected: entry.value,
+                isSelected: widget.selectedDays[day] ?? false,  
               );
             }).toList())
       ],
@@ -441,15 +438,15 @@ class AlarmDayBtn extends StatefulWidget {
   const AlarmDayBtn({
     super.key,
     required this.dayInital,
-    required this.dayIndex,
+    required this.dayKey,
     required this.selectedDays,
     this.onPressed,
     required this.isEnabled, required this.isSelected,
   });
 
   final String dayInital;
-  final int dayIndex;
-  final List<bool> selectedDays;
+  final String dayKey;
+  final Map<String, bool> selectedDays;
   final VoidCallback? onPressed;
   final bool isEnabled;
   final bool isSelected;
@@ -490,7 +487,7 @@ class _AlarmDayBtnState extends State<AlarmDayBtn> {
     onSelect() {
       setState(() {
         _isSelected = !_isSelected;
-        widget.selectedDays[widget.dayIndex] = _isSelected;
+        widget.selectedDays[widget.dayKey] = _isSelected;
 
         if (widget.onPressed != null) {
           widget.onPressed!();

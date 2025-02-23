@@ -18,6 +18,16 @@ class AlarmsService {
 
   static const MethodChannel _channel = MethodChannel('exactAlarmChannel');
 
+  static const Map<String, int> dayStringToWeekday = {
+      "SUN": DateTime.sunday,
+      "MON": DateTime.monday,
+      "TUE": DateTime.tuesday,
+      "WED": DateTime.wednesday,
+      "THU": DateTime.thursday,
+      "FRI": DateTime.friday,
+      "SAT": DateTime.saturday,
+    };
+
   /// Checks whether the device can schedule exact alarms.
   ///
   /// Returns `true` if exact alarms can be scheduled, otherwise `false`.
@@ -95,6 +105,48 @@ class AlarmsService {
   /// Uses the Android Alarm Manager to schedule the alarm with the given [Alarm]
   /// object. The alarm is set as exact and will wake up the device if necessary.
   Future<void> scheduleAlarmAt(Alarm alarm) async {
-    await AndroidAlarmManager.oneShotAt(alarm.time, alarm.id, alarmCallback, exact: true, wakeup: true);
+    alarm.days.forEach((dayKey, isActive) async {
+      if(isActive) {
+        final targetWeekday = dayStringToWeekday[dayKey];
+        if(targetWeekday != null) {
+          final nextOccourance = _getNextOccurrence(alarm.time, targetWeekday);
+          final int truncatedAlarmId = alarm.id & ((1 << 28) - 1);
+          final int id = (((truncatedAlarmId << 3) | (targetWeekday & 0x7)) & 0xFFFFFFFF);
+
+          await AndroidAlarmManager.oneShotAt(nextOccourance, id, alarmCallback, exact: true, wakeup: true);
+          debugPrint("Scheduled alarm for ${alarm.time} on ${nextOccourance.weekday}");
+        }
+      }
+    });
+  }
+
+  Future<void> cancelAlarm(Alarm alarm) async {
+    alarm.days.forEach((dayKey, isActive) async {
+      if(isActive) {
+        final targetWeekday = dayStringToWeekday[dayKey];
+        if(targetWeekday != null) {
+          final int truncatedAlarmId = alarm.id & ((1 << 28) - 1);
+          final int id = (((truncatedAlarmId << 3) | (targetWeekday & 0x7)) & 0xFFFFFFFF);
+
+          await AndroidAlarmManager.cancel(id);
+          debugPrint("Canceled alarm for ${alarm.time} on ${targetWeekday}");
+        }
+      }
+    });
+  }
+
+  DateTime _getNextOccurrence(DateTime alarmTime, int targetDay) {
+    final now = DateTime.now();
+
+    DateTime scheduled = DateTime(now.year, now.month, now.day, alarmTime.hour, alarmTime.minute);
+    int daysToAdd = (targetDay - scheduled.weekday) % 7;
+
+    if(daysToAdd == 0 && scheduled.isBefore(now)) {
+      daysToAdd = 7;
+    } else if(daysToAdd < 0) {
+      daysToAdd += 7;
+    }
+
+    return scheduled.add(Duration(days: daysToAdd));
   }
 }

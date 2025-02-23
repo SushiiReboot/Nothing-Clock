@@ -59,28 +59,4 @@ class NotificationService {
         platformChannelSpecifics,
         payload: "alarm_triggered");
   }
-
-  /// Checks and requests notification permission from the user.
-  ///
-  /// This method uses the `permission_handler` package to check whether the
-  /// notification permission is granted. If not, it requests the permission.
-  /// Debug messages are printed if the permission is denied or permanently denied.
-  Future<void> checkAndRequestNotificationPermission() async {
-    final status = await Permission.notification.status;
-
-    if(status.isGranted) {
-      return;
-    }
-    
-    final result = await Permission.notification.request();
-    if(result.isGranted) {
-      return;
-    }
-
-    if(result.isDenied) {
-      debugPrint("Notification permission is denied");
-    } else if(result.isPermanentlyDenied) {
-      debugPrint("Notification permission is permanently denied");
-    }
-  }
 }

@@ -19,7 +19,7 @@ class AlarmAdapter extends TypeAdapter<Alarm> {
     return Alarm(
       id: fields[3] as int?,
       time: fields[0] as DateTime,
-      days: (fields[1] as List).cast<bool>(),
+      days: (fields[1] as Map).cast<String, bool>(),
       isEnabled: fields[2] == null ? false : fields[2] as bool,
     );
   }

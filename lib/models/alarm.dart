@@ -8,7 +8,7 @@ class Alarm extends HiveObject {
   DateTime time;
 
   @HiveField(1)
-  List<bool> days;
+  Map<String, bool> days;
 
   @HiveField(2, defaultValue: false)
   bool isEnabled;

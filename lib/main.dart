@@ -28,7 +28,7 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(AlarmAdapter());
 
-    final ReceivePort receivePort = ReceivePort();
+  final ReceivePort receivePort = ReceivePort();
   IsolateNameServer.registerPortWithName(receivePort.sendPort, "alarmPort");
 
   receivePort.listen((message) async {

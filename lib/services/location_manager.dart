@@ -154,28 +154,7 @@ class LocationManager {
       throw Exception("Location services are disabled.");
     }
 
-    _checkLocationPermission();
     return await Geolocator.getCurrentPosition();
-  }
-
-  /// Checks and requests location permissions if necessary.
-  ///
-  /// Throws an [Exception] if the user denies permission or if permissions
-  /// are permanently denied.
-  Future<void> _checkLocationPermission() async {
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception(
-            "Location permissions are denied."); //TODO: Add a more user-friendly message.
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception(
-          "Location permissions are permanently denied, we cannot request permissions.");
-    }
   }
 
   /// Initializes the user location by attempting to load cached data.
