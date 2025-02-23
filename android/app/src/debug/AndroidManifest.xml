@@ -1,8 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- The INTERNET permission is required for development. Specifically,
-         the Flutter tool needs it to communicate with the running application
-         to allow setting breakpoints, to provide hot reload, etc.
-    -->
+    <!-- Permissions and application declarations -->
     <application>
         <service
             android:name="dev.fluttercommunity.plus.androidalarmmanager.AlarmService"
@@ -24,7 +21,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <!-- For apps with targetSDK 31 (Android 12) and newer -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <queries>
@@ -40,11 +37,5 @@
             <action android:name="android.intent.action.SEND" />
             <data android:mimeType="*/*" />
         </intent>
-        <intent>
-  <action android:name="android.intent.action.VIEW" />
-  <category android:name="android.intent.category.BROWSABLE" />
-  <data android:scheme="https" />
-</intent>
-
     </queries>
 </manifest>

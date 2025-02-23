@@ -66,10 +66,12 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
                                   crossAxisSpacing: 10,
                                   mainAxisSpacing: 10),
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _alarms.length + 1, //Set to + 1 because we need to build the add alarm button
+                          itemCount: _alarms.length +
+                              1, //Set to + 1 because we need to build the add alarm button
                           shrinkWrap: true,
                           itemBuilder: (context, index) {
-                            if (index == _alarms.length) { //It goes outside the array bounds, but it builds the add alarm button {
+                            if (index == _alarms.length) {
+                              //It goes outside the array bounds, but it builds the add alarm button {
                               return _buildAddAlarmButton(theme, alarmBlockSize,
                                   themeProvider, context);
                             }
@@ -184,7 +186,7 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
                 Alarm alarm = Alarm(time: selectedTime, days: selectedDays);
                 AlarmsService().saveAlarmData(alarm);
 
-                List<Alarm> updatedAlarms = await AlarmsService().loadAlarms(); 
+                List<Alarm> updatedAlarms = await AlarmsService().loadAlarms();
                 setState(() {
                   _alarms = updatedAlarms;
                 });
@@ -212,10 +214,14 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
       double alarmBlockSize, BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    String time = "${alarm.time.hour.toString().padLeft(2, '0')}:${alarm.time.minute.toString().padLeft(2, '0')}";
+    String time =
+        "${alarm.time.hour.toString().padLeft(2, '0')}:${alarm.time.minute.toString().padLeft(2, '0')}";
     const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-    final activeDays = [for(var i = 0; i < days.length; i++) if(alarm.days[i]) days[i]].join(", ");
+    final activeDays = [
+      for (var i = 0; i < days.length; i++)
+        if (alarm.days[i]) days[i]
+    ].join(", ");
 
     return Container(
       width: 200,
@@ -247,12 +253,16 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
               top: alarmBlockSize - 80,
               left: 75,
               child: SwitchButton(
+                defaultValue: alarm.isEnabled,
                 onChanged: () {
                   alarm.isEnabled = !alarm.isEnabled;
-                  if(alarm.isEnabled) {
+                  if (alarm.isEnabled) {
                     AlarmsService().scheduleAlarmAt(alarm);
                   }
-                  debugPrint("Alarm with time: $time is now ${alarm.isEnabled}");
+                  alarm.save();
+
+                  debugPrint(
+                      "Alarm with time: $time is now ${alarm.isEnabled}");
                 },
                 inactiveThumbColor: themeProvider.isDarkMode
                     ? theme.colorScheme.onSurface

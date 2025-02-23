@@ -10,6 +10,7 @@ import 'package:nothing_clock/providers/theme_provider.dart';
 import 'package:nothing_clock/providers/worldclocks_provider.dart';
 import 'package:nothing_clock/services/alarms_service.dart';
 import 'package:nothing_clock/services/location_manager.dart';
+import 'package:nothing_clock/services/notification_service.dart';
 import 'package:nothing_clock/widgets/clock_stream_widget.dart';
 import 'package:nothing_clock/widgets/time_zone_clock.dart';
 import 'package:nothing_clock/widgets/world_map.dart';
@@ -200,6 +201,8 @@ class _LocationInfoState extends State<LocationInfo> {
   void initState() {
     super.initState();
     locationManager = LocationManager();
+
+    NotificationService().checkAndRequestNotificationPermission();
   }
 
   @override

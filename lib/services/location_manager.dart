@@ -5,43 +5,53 @@ import 'package:geolocator/geolocator.dart';
 import 'package:nothing_clock/models/user_position.dart';
 import 'package:worldtime/worldtime.dart';
 
-/// A service class that handles retrieving and saving user location data,
-/// including determining the current position and converting coordinates to an address.
+/// A service class that handles retrieving, saving, and caching
+/// user location data. It determines the current position,
+/// converts coordinates into an address, and manages persistence
+/// via secure storage. The class is implemented as a singleton so that
+/// the location is only fetched once and shared throughout the app.
 class LocationManager {
+  /// The single instance of [LocationManager].
   static final LocationManager _instance = LocationManager._internal();
 
-  /// The current user position, including latitude, longitude, and optionally a placemark.
+  /// The cached user position including latitude, longitude, UTC offset,
+  /// and optionally a placemark (address details).
   UserPosition? _currentPosition;
 
   /// Public getter for the current user position.
   UserPosition? get currentPosition => _currentPosition;
 
+  /// A future that completes when the location is initialized.
   late final Future<void> initialization;
 
-  /// Creates a [LocationManager] instance and initializes the user location.
+  /// Private named constructor for initializing the singleton instance.
   ///
-  /// The constructor automatically calls [_initializeLocation] to load any cached location
-  /// data or refresh it if necessary.
+  /// If [currentPosition] is not already set, it triggers asynchronous
+  /// initialization via [_initializeLocation] to load cached data or
+  /// fetch the current location.
   LocationManager._internal() {
     if (currentPosition == null) {
       initialization = _initializeLocation();
     }
   }
 
+  /// Factory constructor that always returns the same instance.
   factory LocationManager() {
     return _instance;
   }
 
-  /// Converts the given [position] into a [UserPosition] by fetching a placemark
-  /// corresponding to the latitude and longitude.
+  /// Converts a [Position] (from geolocator) into a [UserPosition] by
+  /// fetching a corresponding [Placemark] using the provided latitude
+  /// and longitude. If [position] is null, [_determineUserPosition] is called.
   ///
-  /// If [position] is null, the method will determine the user's position.
-  ///
-  /// Throws an [Exception] if no placemarks are found or if an error occurs during the process.
+  /// Throws an [Exception] if no placemarks are found or if an error occurs.
   Future<UserPosition> getAddressFromLatLng(Position? position) async {
+    
+    // If position is null, fetch the current location.
     position ??= await _determineUserPosition();
 
     try {
+      // Retrieve the list of placemarks based on the coordinates.
       List<Placemark> placeMarks =
           await placemarkFromCoordinates(position.latitude, position.longitude);
 
@@ -49,8 +59,10 @@ class LocationManager {
         throw Exception("No placemarks found for the provided coordinates.");
       }
 
+      // Retrieve the UTC offset using the worldtime package.
       int? utcOffset = await _getUtcOffset(position.latitude, position.longitude);
 
+      // Return a new UserPosition with the fetched data.
       return UserPosition(
           latitude: position.latitude,
           longitude: position.longitude,
@@ -61,9 +73,10 @@ class LocationManager {
     }
   }
 
-  /// Saves the user's current [position] (latitude and longitude) to secure storage.
+  /// Saves the provided [UserPosition] to secure storage using
+  /// [FlutterSecureStorage]. The data is stored as strings.
   ///
-  /// The data is stored as strings using [FlutterSecureStorage].
+  /// Uses Android's EncryptedSharedPreferences for secure storage.
   Future<void> saveLocation(UserPosition position) async {
     const FlutterSecureStorage storage = FlutterSecureStorage(
         aOptions: AndroidOptions(encryptedSharedPreferences: true));
@@ -75,9 +88,9 @@ class LocationManager {
     await storage.write(key: "utcOffset", value: position.utcOffset.toString());
   }
 
-  /// Loads the user's saved location from secure storage and returns it as a [UserPosition].
-  ///
-  /// If no location data is found, returns a [UserPosition] with null latitude and longitude.
+  /// Loads the user's saved location from secure storage and returns it as
+  /// a [UserPosition]. If any of the core fields are missing, a [UserPosition]
+  /// with null coordinates and a UTC offset of 0 is returned.
   Future<UserPosition> loadLocation() async {
     const FlutterSecureStorage storage = FlutterSecureStorage(
         aOptions: AndroidOptions(encryptedSharedPreferences: true));
@@ -91,6 +104,7 @@ class LocationManager {
       placemark = UserPosition.deserializePlacemark(placemarkString);
     }
 
+    // If essential data is missing, return a UserPosition with null coordinates.
     if (latitude == null || longitude == null || utcOffset == null) {
       UserPosition userPosition = UserPosition(
           latitude: null, longitude: null, placemark: placemark, utcOffset: 0);
@@ -99,6 +113,7 @@ class LocationManager {
       return userPosition;
     }
 
+    // Parse the stored values and create a UserPosition.
     UserPosition userPosition = UserPosition(
         latitude: double.parse(latitude),
         longitude: double.parse(longitude),
@@ -109,6 +124,10 @@ class LocationManager {
     return userPosition;
   }
 
+  /// Returns the UTC offset (in hours) for the given [latitude] and [longitude].
+  ///
+  /// If the UTC offset is already cached in [_currentPosition], it returns that value.
+  /// Otherwise, it uses the [Worldtime] package to determine the time zone offset.
   Future<int?> _getUtcOffset(double latitude, double longitude) async {
     if(_currentPosition?.utcOffset != null) {
       return _currentPosition?.utcOffset!;

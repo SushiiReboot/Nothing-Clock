@@ -16,7 +16,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity: FlutterActivity() {
     private val CLOCK_EVENT_CHANNEL = "clockEventChannel"
-    private val EXACT_ALARM_CHANNEL = "com.example.nothing_clock"
+    private val EXACT_ALARM_CHANNEL = "exactAlarmChannel"
     private var eventSink: EventChannel.EventSink? = null
 
     private val timeChangerReceiver = object : BroadcastReceiver() {
