@@ -22,7 +22,7 @@ Before you begin, ensure you have the following installed:
 ## Installation
 Clone the repository:
 
-    git clone https://github.com/yourusername/nothing-clock.git
+    git clone https://github.com/SushiiReboot/Nothing-Clock
 
 Open the project in Android Studio and build the project:
 
