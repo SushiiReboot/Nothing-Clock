@@ -8,6 +8,7 @@ class StopwatchBtnController extends StatefulWidget {
     required this.borderColor,
     required this.iconColor,
     required this.icon,
+    this.onTap,
   });
 
   final bool isFilled;
@@ -15,6 +16,7 @@ class StopwatchBtnController extends StatefulWidget {
   final Color borderColor;
   final Color? iconColor;
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   State<StopwatchBtnController> createState() => _StopwatchBtnControllerState();
@@ -25,7 +27,7 @@ class _StopwatchBtnControllerState extends State<StopwatchBtnController> {
   Widget build(BuildContext context) {
     return InkWell(
       customBorder: const CircleBorder(),
-      onTap: () {},
+      onTap: widget.onTap,
       child: Container(
         decoration: BoxDecoration(
             color: widget.isFilled ? widget.filledColor : Colors.transparent,

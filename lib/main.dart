@@ -10,6 +10,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:nothing_clock/models/alarm.dart';
 import 'package:nothing_clock/providers/clock_provider.dart';
 import 'package:nothing_clock/providers/page_provider.dart';
+import 'package:nothing_clock/providers/stopwatch_provider.dart';
 import 'package:nothing_clock/providers/theme_provider.dart';
 import 'package:nothing_clock/providers/timer_provider.dart';
 import 'package:nothing_clock/providers/worldclocks_provider.dart';
@@ -118,6 +119,7 @@ class NothingClock extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => PageProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => TimerProvider()),
+        ChangeNotifierProvider(create: (context) => StopwatchProvider()),
         ChangeNotifierProvider(
             create: (context) => WorldClocksProvider(context))
       ],
