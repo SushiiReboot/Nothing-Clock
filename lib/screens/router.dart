@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nothing_clock/screens/alarms_screen.dart';
 import 'package:nothing_clock/screens/clock_screen.dart';
 import 'package:nothing_clock/screens/stopwatch_screen.dart';
+import 'package:nothing_clock/screens/timer_screen.dart';
 import 'package:nothing_clock/widgets/drawer_popup.dart';
 import 'package:nothing_clock/widgets/top_bar.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +22,7 @@ class _RouterState extends State<Router> {
   static const List<Widget> _screens = [
     ClockScreen(),
     AlarmsScreen(),
-    Placeholder(),
+    TimerScreen(),
     StopwatchScreen(),
   ];
 

@@ -55,11 +55,12 @@ dependencies:
   freezed_annotation: ^2.1.0
   injectable: ^2.0.0
   flutter_bloc: ^8.0.1
-  android_alarm_manager_plus: ^4.0.6
+  android_alarm_manager_plus: ^4.0.7
   flutter_secure_storage: ^9.2.4
   uuid: ^4.5.1
   flutter_local_notifications: ^18.0.1
   permission_handler: ^11.4.0
+  audioplayers: ^6.4.0
 
 dev_dependencies:
   flutter_lints: ^4.0.0
@@ -82,6 +83,7 @@ flutter:
   assets:
     - lib/assets/map/map.svg
     - lib/assets/map/data/countries_coords.json
+    - assets/sounds/alarm.mp3
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
   # For details regarding adding assets from package dependencies, see

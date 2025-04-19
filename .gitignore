@@ -12,6 +12,23 @@
 .swiftpm/
 migrate_working_dir/
 
+# Android NDK / CMake artifacts
+android/app/.cxx/
+
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub-cache/
+build/
+# iOS
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+# Android
+android/.gradle/
+android/captures/
+*.iml
+.gradle/
+
 # IntelliJ related
 *.iml
 *.ipr

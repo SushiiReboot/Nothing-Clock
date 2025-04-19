@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -17,10 +19,20 @@ import 'package:nothing_clock/theme/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:nothing_clock/services/alarms_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterDisplayMode.setHighRefreshRate();
+
+  if (!Platform.isAndroid) {
+    WidgetsFlutterBinding.ensureInitialized();
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+      ),
+    );
+  }
 
   tz.initializeTimeZones();
   await TimeCountry.init();
@@ -28,22 +40,41 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(AlarmAdapter());
 
-  final ReceivePort receivePort = ReceivePort();
-  IsolateNameServer.registerPortWithName(receivePort.sendPort, "alarmPort");
-
+  // Register a named port for alarm callbacks to communicate with the main isolate
+  IsolateNameServer.registerPortWithName(
+    ReceivePort().sendPort,
+    'alarmPort',
+  );
+  
+  // Listen for alarm messages
+  ReceivePort receivePort = ReceivePort();
+  IsolateNameServer.registerPortWithName(
+    receivePort.sendPort,
+    'alarmPort',
+  );
+  
   receivePort.listen((message) async {
-    if(message == "showNotification") {
+    if (message == 'showNotification') {
       await NotificationService.showFullScreenNotification(
-          id: 0,
-          title: "Alarm",
-          body: "Alarm triggered!");
-
-      debugPrint("Notificaiton received!");
+        id: 0, 
+        title: 'Alarm', 
+        body: 'Your alarm is ringing!',
+      );
+      debugPrint("Notification received!");
     }
-  }); 
-
-  AndroidAlarmManager.initialize();
+  });
+  
+  // Initialize alarm manager and notification service
+  await AndroidAlarmManager.initialize();
   await NotificationService.initialize();
+  
+  // Request necessary permissions for exact alarms
+  final alarmService = AlarmsService();
+  final canScheduleExactAlarms = await alarmService.canScheduleExactAlarms();
+  if (!canScheduleExactAlarms) {
+    // Open settings to allow user to grant permission
+    await AlarmsService.openExactAlarmSettings();
+  }
 
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemeFromPreferences();
