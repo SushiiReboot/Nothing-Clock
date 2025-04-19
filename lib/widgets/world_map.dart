@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:nothing_clock/providers/theme_provider.dart';
+import 'package:nothing_clock/providers/worldclocks_provider.dart';
 import 'package:nothing_clock/services/dot_map_converter.dart';
+import 'package:nothing_clock/services/location_manager.dart';
 import 'package:provider/provider.dart';
 
 class WorldMap extends StatelessWidget {
@@ -9,13 +11,16 @@ class WorldMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Offset sicilyCoords =
-        DotMapConverter.convertCoordsToMapCoords(38.116669, 13.366667);
-
-    Offset tokyoCoords =
-        DotMapConverter.convertCoordsToMapCoords(35.6895, 139.6917);
-
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final worldClocksProvider = Provider.of<WorldClocksProvider>(context);
+    
+    // Get current location coordinates
+    final locationManager = LocationManager();
+    final currentPosition = locationManager.currentPosition;
+    Offset currentLocationCoords = currentPosition?.latitude != null && currentPosition?.longitude != null
+        ? DotMapConverter.convertCoordsToMapCoords(
+            currentPosition!.latitude!, currentPosition.longitude!)
+        : DotMapConverter.convertCoordsToMapCoords(0, 0); // Default if no location
 
     final otherLocationPinColor = themeProvider.isDarkMode
         ? const Color.fromARGB(255, 255, 255, 255)
@@ -36,15 +41,32 @@ class WorldMap extends StatelessWidget {
             ),
           ),
         ),
-        _addDotToMap(sicilyCoords.dx - 1, sicilyCoords.dy - 2, true, Colors.red,
-            otherLocationPinColor),
-        _addDotToMap(tokyoCoords.dx - 1, tokyoCoords.dy - 2, false, Colors.red,
-            otherLocationPinColor),
+        // Add current location dot (red)
+        _addDotToMap(
+          currentLocationCoords.dx - 1, 
+          currentLocationCoords.dy - 2, 
+          true, 
+          Colors.red,
+          otherLocationPinColor
+        ),
+        
+        // Add dots for all world clocks (white)
+        ...worldClocksProvider.worldClocks.map((clock) {
+          final clockCoords = DotMapConverter.convertCoordsToMapCoords(
+            clock.latitude, 
+            clock.longitude
+          );
+          return _addDotToMap(
+            clockCoords.dx - 1, 
+            clockCoords.dy - 2, 
+            false, 
+            Colors.red,
+            otherLocationPinColor
+          );
+        }).toList(),
       ],
     );
   }
-
-  // You can use the rest of your original code here
 }
 
 Positioned _addDotToMap(double xCoord, double yCoord, bool isCurrentLocation,
