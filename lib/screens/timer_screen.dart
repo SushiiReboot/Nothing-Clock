@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:audioplayers/audioplayers.dart'; // Add for sound
 
 class TimerScreen extends StatefulWidget {
@@ -16,11 +16,15 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
   // Timer properties
   int _totalSeconds = 6 * 60 + 4; // Example: 6:04
   int _remainingSeconds = 6 * 60 + 4;
-  final int _originalTotalSeconds = 6 * 60 + 4; // Keep track of original total for progress calculation. Remove in the future.
+  int _originalTotalSeconds = 6 * 60 + 4; // Keep track of original total for progress calculation. Remove in the future.
   bool _isRunning = true; // Start with the timer running as in the image
   bool _isCompleted = false; // Track if timer has completed
   Timer? _timer;
   AudioPlayer? _audioPlayer; // Make nullable instead of late
+  
+  // Timer picker mode
+  bool _isPickerMode = false;
+  Duration _pickerDuration = const Duration(hours: 0, minutes: 6, seconds: 4);
   
   // Animation controllers
   late AnimationController _progressController;
@@ -257,9 +261,23 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
     }
     
     setState(() {
-      _totalSeconds = max(0, _totalSeconds + secondsToAdjust);
-      _remainingSeconds = max(0, _remainingSeconds + secondsToAdjust);
-      // Do not update _originalTotalSeconds so progress calculation remains consistent
+      // If we're adjusting time, we need to update both total and remaining seconds
+      int newTotalSeconds = max(0, _totalSeconds + secondsToAdjust);
+      int newRemainingSeconds = _remainingSeconds + secondsToAdjust;
+      
+      // Check if the timer would go negative
+      if (newRemainingSeconds <= 0 && !_isCompleted) {
+        // Timer is hitting zero - trigger completion
+        _totalSeconds = max(1, newTotalSeconds); // Ensure total is not zero to avoid division by zero
+        _remainingSeconds = 0;
+        _originalTotalSeconds = _totalSeconds;
+        _onTimerComplete(); // This will handle starting the negative countdown
+      } else {
+        // Normal adjustment
+        _totalSeconds = newTotalSeconds;
+        _remainingSeconds = max(0, newRemainingSeconds);
+        _originalTotalSeconds = _totalSeconds;
+      }
     });
     
     if (wasRunning && _remainingSeconds > 0) {
@@ -267,24 +285,162 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
     }
   }
   
-  // Format seconds to MM:SS
+  // Format seconds to HH:MM:SS
   String _formatTime(int seconds) {
     final isNegative = seconds < 0;
     final absSeconds = seconds.abs();
-    final minutes = absSeconds ~/ 60;
+    
+    final hours = absSeconds ~/ 3600;
+    final minutes = (absSeconds % 3600) ~/ 60;
     final remainingSeconds = absSeconds % 60;
-    return '${isNegative ? "-" : ""}$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
+    
+    if (hours > 0) {
+      return '${isNegative ? "-" : ""}$hours:${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+    } else {
+      return '${isNegative ? "-" : ""}${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+    }
   }
   
   // Update CustomPaint based on original total and current progress
   double get _progressRatio {
-    // Calculate progress based on original total time
-    if (_isCompleted) return 1.0;
+    // Return full progress when completed or if original total is zero/negative
+    if (_isCompleted || _originalTotalSeconds <= 0) return 1.0;
     
     // Calculate elapsed seconds
     final elapsedSeconds = _originalTotalSeconds - _remainingSeconds;
-    // Ensure we don't exceed 1.0 (100%)
-    return min(1.0, max(0.0, elapsedSeconds / _originalTotalSeconds));
+    
+    // Ensure we don't exceed 1.0 (100%) and handle negative cases
+    return min(1.0, max(0.0, elapsedSeconds / max(1, _originalTotalSeconds)));
+  }
+  
+  // Toggle between timer and picker mode
+  void _togglePickerMode() {
+    if (_isCompleted) {
+      _snoozeTimer();
+    }
+    
+    debugPrint("Toggling picker mode, current mode: $_isPickerMode");
+    setState(() {
+      _isPickerMode = !_isPickerMode;
+      
+      if (!_isPickerMode) {
+        // User selected a time, update the timer
+        _totalSeconds = _pickerDuration.inSeconds;
+        _remainingSeconds = _totalSeconds;
+        _originalTotalSeconds = _totalSeconds; // Reset progress calculation base
+        
+        // Reset the timer
+        _progressController.reset();
+        
+        // If timer was running, restart with new duration
+        if (_isRunning) {
+          _pauseTimer();
+          _startTimer();
+        }
+      } else {
+        // User is entering picker mode, pause the timer
+        if (_isRunning) {
+          _pauseTimer();
+        }
+        
+        // Update picker with current timer value
+        _pickerDuration = Duration(seconds: _remainingSeconds);
+      }
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Helpers to build custom three‑wheel timer picker with tight gaps
+  Widget _buildPickerColumn({
+    required List<String> values,
+    required int initial,
+    required ValueChanged<int> onSelected,
+    required bool isInline,
+  }) {
+    return SizedBox(
+      width: 46,          // narrower than CupertinoTimerPicker default
+      height: isInline ? 150 : 200,
+      child: CupertinoPicker(
+        scrollController: FixedExtentScrollController(initialItem: initial),
+        itemExtent: 32,
+        magnification: 1.1,
+        useMagnifier: false,
+        onSelectedItemChanged: onSelected,
+        children:
+            values.map((v) => Center(child: Text(v))).toList(growable: false),
+      ),
+    );
+  }
+
+  Widget _buildCustomTimerPicker({required bool isInline}) {
+    final h = _pickerDuration.inHours.remainder(24);
+    final m = _pickerDuration.inMinutes.remainder(60);
+    final s = _pickerDuration.inSeconds.remainder(60);
+
+    final textStyle = TextStyle(
+      color: isInline ? Colors.black : Colors.white,
+      fontSize: isInline ? 18 : 22,
+      fontWeight: isInline ? FontWeight.w400 : FontWeight.w600,
+    );
+
+    return CupertinoTheme(
+      data: CupertinoThemeData(
+        brightness: isInline ? Brightness.light : Brightness.dark,
+        textTheme: CupertinoTextThemeData(pickerTextStyle: textStyle),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Hours
+          _buildPickerColumn(
+            values: List.generate(24, (i) => i.toString().padLeft(2, '0')),
+            initial: h,
+            isInline: isInline,
+            onSelected: (index) {
+              setState(() {
+                _pickerDuration = Duration(
+                  hours: index,
+                  minutes: _pickerDuration.inMinutes.remainder(60),
+                  seconds: _pickerDuration.inSeconds.remainder(60),
+                );
+              });
+            },
+          ),
+          const SizedBox(width: 4),
+          // Minutes
+          _buildPickerColumn(
+            values: List.generate(60, (i) => i.toString().padLeft(2, '0')),
+            initial: m,
+            isInline: isInline,
+            onSelected: (index) {
+              setState(() {
+                _pickerDuration = Duration(
+                  hours: _pickerDuration.inHours.remainder(24),
+                  minutes: index,
+                  seconds: _pickerDuration.inSeconds.remainder(60),
+                );
+              });
+            },
+          ),
+          const SizedBox(width: 4),
+          // Seconds
+          _buildPickerColumn(
+            values: List.generate(60, (i) => i.toString().padLeft(2, '0')),
+            initial: s,
+            isInline: isInline,
+            onSelected: (index) {
+              setState(() {
+                _pickerDuration = Duration(
+                  hours: _pickerDuration.inHours.remainder(24),
+                  minutes: _pickerDuration.inMinutes.remainder(60),
+                  seconds: index,
+                );
+              });
+            },
+          ),
+        ],
+      ),
+    );
   }
   
   @override
@@ -298,67 +454,7 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
           Expanded(
             flex: 5,
             child: Center(
-              child: AnimatedBuilder(
-                animation: Listenable.merge([
-                  _progressController, 
-                  _pulseAnimation, 
-                  _completedPulseAnimation
-                ]),
-                builder: (context, child) {
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Draw circles first
-                      CustomPaint(
-                        size: const Size(320, 320), // Larger canvas for circles
-                        painter: TimerPainter(
-                          progress: _progressRatio,
-                          baseColor: const Color.fromARGB(255, 232, 228, 228),
-                          progressColor: Colors.red,
-                          dotCount: 64,
-                          pulseAnimation: _pulseAnimation.value,
-                          isRunning: _isRunning,
-                          dotRadius: 2.0,
-                        ),
-                      ),
-                      // Then draw the white circle with time
-                      AnimatedScale(
-                        scale: _isCompleted ? _completedPulseAnimation.value : 1.0,
-                        duration: const Duration(milliseconds: 300),
-                        child: child!,
-                      ),
-                    ],
-                  );
-                },
-                child: Container(
-                  width: 180,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _isCompleted ? Colors.red.withOpacity(0.9) : Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: _isCompleted 
-                          ? Colors.red.withOpacity(0.5) 
-                          : Colors.white.withOpacity(0.1),
-                        blurRadius: _isCompleted ? 16 : 8,
-                        spreadRadius: _isCompleted ? 4 : 2,
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      _formatTime(_remainingSeconds),
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w300,
-                        fontFamily: 'Roboto',
-                        color: _isCompleted ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              child: _buildTimerDisplay(),
             ),
           ),
           // Timer controls
@@ -366,111 +462,237 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
             flex: 2,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              child: Column(
                 children: [
-                  // -1:00 button
-                  ElevatedButton(
-                    onPressed: _isCompleted ? null : () => _adjustTime(-60),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF333333),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                    child: const Text(
-                      "- 1:00",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  // Play/Pause button
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: 65,
-                    height: 65,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.red.withOpacity(0.3),
-                          blurRadius: _isRunning ? 12 : 0,
-                          spreadRadius: _isRunning ? 2 : 0,
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      onPressed: _toggleTimer,
-                      icon: Icon(
-                        _isCompleted ? Icons.stop : (_isRunning ? Icons.pause : Icons.play_arrow),
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                  // Snooze button (visible when timer completes)
-                  if (_isCompleted)
-                    AnimatedOpacity(
-                      opacity: _isCompleted ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
-                      child: GestureDetector(
-                        onTap: () {
-                          debugPrint("Snooze GestureDetector tapped");
-                          _snoozeTimer();
-                        },
-                        child: Container(
-                          width: 55,
-                          height: 55,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF333333),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.red.withOpacity(0.2),
-                                blurRadius: 8,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
+                  // Main row of controls
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Left button: -1:00 or Cancel
+                      _isPickerMode
+                        ? ElevatedButton(
                             onPressed: () {
-                              debugPrint("Snooze IconButton pressed");
-                              _snoozeTimer();
+                              setState(() {
+                                _isPickerMode = false;
+                              });
                             },
-                            icon: const Icon(
-                              Icons.snooze,
-                              color: Colors.white,
-                              size: 24,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF333333),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
-                            padding: EdgeInsets.zero,
+                            child: const Text(
+                              "Cancel",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )
+                        : ElevatedButton(
+                            onPressed: _isCompleted ? null : () => _adjustTime(-60),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF333333),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                            child: const Text(
+                              "- 1:00",
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
-                        ),
-                      ),
-                    )
-                  else
-                    // +1:00 button (hidden when timer completes)
-                    ElevatedButton(
-                      onPressed: () => _adjustTime(60),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF333333),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                      child: const Text(
-                        "+ 1:00",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
+                      // Middle button: Play/Pause or Set
+                      _isPickerMode
+                        ? AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: 65,
+                            height: 65,
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _totalSeconds = _pickerDuration.inSeconds;
+                                  _remainingSeconds = _totalSeconds;
+                                  _originalTotalSeconds = _totalSeconds; // Update original total for progress calculation
+                                  _isPickerMode = false;
+                                  
+                                  // Reset the timer and progress
+                                  _progressController.reset();
+                                });
+                              },
+                              icon: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                          )
+                        : AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: 65,
+                            height: 65,
+                            decoration: BoxDecoration(
+                              color: _isCompleted ? Colors.blue : Colors.red,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (_isCompleted ? Colors.blue : Colors.red).withOpacity(0.3),
+                                  blurRadius: _isRunning ? 12 : 0,
+                                  spreadRadius: _isRunning ? 2 : 0,
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              onPressed: _isCompleted ? _snoozeTimer : _toggleTimer,
+                              icon: Icon(
+                                _isCompleted ? Icons.stop : (_isRunning ? Icons.pause : Icons.play_arrow),
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                      // Right button: +1:00 or Edit
+                      _isPickerMode
+                        ? const SizedBox(width: 90) // Placeholder for symmetry
+                        : !_isCompleted
+                          ? ElevatedButton(
+                              onPressed: () => _adjustTime(60),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF333333),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
+                              child: const Text(
+                                "+ 1:00",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            )
+                          : ElevatedButton(
+                              onPressed: _snoozeTimer,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF333333),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
+                              child: const Text(
+                                "Snooze",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ),
           const Spacer(flex: 1),
         ],
+      ),
+    );
+  }
+  
+  // Build the timer display widget
+  Widget _buildTimerDisplay() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        _progressController, 
+        _pulseAnimation, 
+        _completedPulseAnimation
+      ]),
+      builder: (context, child) {
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // Draw circles first
+            CustomPaint(
+              size: const Size(320, 320), // Larger canvas for circles
+              painter: TimerPainter(
+                progress: _progressRatio,
+                baseColor: const Color.fromARGB(255, 232, 228, 228),
+                progressColor: Colors.red,
+                dotCount: 64,
+                pulseAnimation: _pulseAnimation.value,
+                isRunning: _isRunning,
+                dotRadius: 2.0,
+              ),
+            ),
+            // Then draw the white circle with time or picker
+            AnimatedScale(
+              scale: _isCompleted ? _completedPulseAnimation.value : 1.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                width: 210,
+                height: 210,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _isCompleted ? Colors.red.withOpacity(0.9) : Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: _isCompleted 
+                        ? Colors.red.withOpacity(0.5) 
+                        : Colors.white.withOpacity(0.1),
+                      blurRadius: _isCompleted ? 16 : 8,
+                      spreadRadius: _isCompleted ? 4 : 2,
+                    ),
+                  ],
+                ),
+                child: _isPickerMode ? _buildInlineTimerPicker() : _buildTimeDisplay(),
+              ),
+            ),
+            
+          ],
+        );
+      },
+    );
+  }
+  
+  // Build the time display widget
+  Widget _buildTimeDisplay() {
+    return GestureDetector(
+      onTap: () {
+        debugPrint("Time display tapped");
+        if (!_isCompleted) {
+          _togglePickerMode();
+        }
+      },
+      child: Center(
+        child: Text(
+          _formatTime(_remainingSeconds),
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w300,
+            fontFamily: 'Roboto',
+            color: _isCompleted ? Colors.white : Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+  
+  // Build the inline timer picker that fits inside the circle (light theme)
+  Widget _buildInlineTimerPicker() {
+    return Center(
+      child: SizedBox(
+        width: 200,
+        height: 180,
+        child: _buildCustomTimerPicker(isInline: true),
       ),
     );
   }
@@ -501,8 +723,11 @@ class TimerPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = min(size.width, size.height) / 2 * 0.95;
     
+    // Safety check to prevent numerical errors
+    final safeProgress = min(1.0, max(0.0, progress));
+    
     // Calculate the exact number of dots that should be filled (as a float)
-    final exactFilledDots = progress * dotCount;
+    final exactFilledDots = safeProgress * dotCount;
     // Round down to get the fully filled dots
     final completelyFilledDots = exactFilledDots.floor();
     // Calculate the transition dot's progress (0.0 to 1.0)
