@@ -17,7 +17,21 @@ class Router extends StatefulWidget {
 
 class _RouterState extends State<Router> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final PageController _pageController = PageController(); // PageController
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize PageController without an initial page
+    // We'll set it based on the provider once the context is available
+    _pageController = PageController(initialPage: 0);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   static const List<Widget> _screens = [
     ClockScreen(),
@@ -41,19 +55,15 @@ class _RouterState extends State<Router> {
       // Use Consumer to rebuild the PageView when the page index changes
       body: Consumer<PageProvider>(
         builder: (context, pageProvider, child) {
-          // Delay the animation to ensure the widget is fully built and ready
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              _pageController.animateToPage(
-                pageProvider.selectedIndex,
-                duration: const Duration(milliseconds: 150),
-                curve: Curves.easeInOut,
-              );
-            }
-          });
+          // Set the page immediately without animation when index changes
+          if (_pageController.hasClients && 
+              _pageController.page?.round() != pageProvider.selectedIndex) {
+            _pageController.jumpToPage(pageProvider.selectedIndex);
+          }
 
           return PageView(
             controller: _pageController,
+            physics: const ClampingScrollPhysics(), // Smoother transitions
             onPageChanged: (index) {
               // Update the provider when the user swipes to a new page
               pageProvider.setPage(index);

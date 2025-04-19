@@ -11,6 +11,7 @@ import 'package:nothing_clock/models/alarm.dart';
 import 'package:nothing_clock/providers/clock_provider.dart';
 import 'package:nothing_clock/providers/page_provider.dart';
 import 'package:nothing_clock/providers/theme_provider.dart';
+import 'package:nothing_clock/providers/timer_provider.dart';
 import 'package:nothing_clock/providers/worldclocks_provider.dart';
 import 'package:nothing_clock/screens/router.dart' as RouterPage;
 import 'package:nothing_clock/services/notification_service.dart';
@@ -46,12 +47,30 @@ void main() async {
     'alarmPort',
   );
   
+  // Register a named port for timer callbacks
+  IsolateNameServer.registerPortWithName(
+    ReceivePort().sendPort,
+    'timer_port',
+  );
+  
   // Listen for alarm messages
   ReceivePort receivePort = ReceivePort();
   IsolateNameServer.registerPortWithName(
     receivePort.sendPort,
     'alarmPort',
   );
+  
+  // Listen for timer messages
+  ReceivePort timerReceivePort = ReceivePort();
+  IsolateNameServer.registerPortWithName(
+    timerReceivePort.sendPort,
+    'timer_port',
+  );
+  
+  timerReceivePort.listen((message) async {
+    debugPrint("Timer message received: $message");
+    // Background timer events will be handled by the TimerProvider
+  });
   
   receivePort.listen((message) async {
     if (message == 'showNotification') {
@@ -98,6 +117,7 @@ class NothingClock extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => ClockProvider()),
         ChangeNotifierProvider(create: (context) => PageProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => TimerProvider()),
         ChangeNotifierProvider(
             create: (context) => WorldClocksProvider(context))
       ],

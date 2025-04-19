@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:audioplayers/audioplayers.dart'; // Add for sound
+import 'package:provider/provider.dart';
+import 'package:nothing_clock/providers/timer_provider.dart';
 
 class TimerScreen extends StatefulWidget {
   const TimerScreen({super.key});
@@ -13,19 +15,6 @@ class TimerScreen extends StatefulWidget {
 }
 
 class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin {
-  // Timer properties
-  int _totalSeconds = 6 * 60 + 4; // Example: 6:04
-  int _remainingSeconds = 6 * 60 + 4;
-  int _originalTotalSeconds = 6 * 60 + 4; // Keep track of original total for progress calculation. Remove in the future.
-  bool _isRunning = true; // Start with the timer running as in the image
-  bool _isCompleted = false; // Track if timer has completed
-  Timer? _timer;
-  AudioPlayer? _audioPlayer; // Make nullable instead of late
-  
-  // Timer picker mode
-  bool _isPickerMode = false;
-  Duration _pickerDuration = const Duration(hours: 0, minutes: 6, seconds: 4);
-  
   // Animation controllers
   late AnimationController _progressController;
   late AnimationController _pulseController;
@@ -37,13 +26,10 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
   void initState() {
     super.initState();
     
-    // Initialize audio player
-    _audioPlayer = AudioPlayer();
-    
-    // Initialize progress animation controller
+    // Initialize progress animation controller - duration will be set in didChangeDependencies
     _progressController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: _totalSeconds),
+      duration: const Duration(seconds: 1), // Placeholder, will be updated
     );
     
     // Initialize pulse animation for dot effects
@@ -66,223 +52,329 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
     _completedPulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
       CurvedAnimation(parent: _completedPulseController, curve: Curves.easeInOut),
     );
+  }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final timerProvider = Provider.of<TimerProvider>(context);
     
-    // Add listener to update UI when animation progresses
-    _progressController.addListener(() {
-      setState(() {
-        if (_isRunning) {
-          _remainingSeconds = (_totalSeconds * (1 - _progressController.value)).round();
-          
-          // Check if timer has reached zero
-          if (_remainingSeconds <= 0 && !_isCompleted) {
-            _onTimerComplete();
-          }
-        }
-      });
-    });
+    // Update progress controller based on provider state
+    _progressController.duration = Duration(seconds: timerProvider.remainingSeconds);
     
-    // Auto-start the timer to match the image
-    _startTimer();
+    // Set the progress controller to the correct value
+    final elapsedFraction = timerProvider.remainingSeconds > 0 
+        ? 1 - (timerProvider.remainingSeconds / timerProvider.totalSeconds) 
+        : 1.0;
+    
+    _progressController.value = elapsedFraction;
+    
+    // Start or stop animations based on timer state
+    if (timerProvider.isRunning && !timerProvider.isCompleted) {
+      // Continue the animation from current position
+      _progressController.animateTo(
+        1.0,
+        duration: Duration(seconds: timerProvider.remainingSeconds),
+        curve: Curves.linear,
+      );
+    }
+    
+    // Handle completed state
+    if (timerProvider.isCompleted) {
+      _completedPulseController.repeat(reverse: true);
+    } else {
+      _completedPulseController.reset();
+    }
   }
   
   @override
   void dispose() {
-    _timer?.cancel();
     _progressController.dispose();
     _pulseController.dispose();
     _completedPulseController.dispose();
-    _audioPlayer?.dispose();
     super.dispose();
   }
   
-  // Handle timer completion
-  void _onTimerComplete() {
-    setState(() {
-      _isCompleted = true;
-      _isRunning = true; // Keep timer running for negative count
-    });
-    
-    // Start the alarm sound (with silent fallback if audio fails)
-    _playAlarmSound();
-    
-    // Start the completion animation - visual indication will work regardless of sound
-    _completedPulseController.repeat(reverse: true);
-    
-    // Start negative counting
-    _startNegativeTimer();
-    
-    // Ensure visual feedback works even if audio fails
-    _ensureVisualFeedback();
-  }
-  
-  // Ensure visual feedback is prominent 
-  void _ensureVisualFeedback() {
-    // We already have the pulsating animation, but can add additional visual feedback here
-    // This is a safeguard to ensure user is notified even if audio fails
-  }
-  
-  // Play alarm sound
-  void _playAlarmSound() async {
-    try {
-      // Try to play the sound
-      if (_audioPlayer != null) {
-        // First try with asset source
-        try {
-          await _audioPlayer!.play(AssetSource('sounds/alarm.mp3'));
-          await _audioPlayer!.setReleaseMode(ReleaseMode.loop); // Loop the sound
-        } catch (e) {
-          debugPrint('First method failed, trying alternative: $e');
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Consumer<TimerProvider>(
+        builder: (context, timerProvider, child) {
+          // Update the progress controller when remaining time changes
+          final elapsedFraction = timerProvider.remainingSeconds > 0 
+              ? 1 - (timerProvider.remainingSeconds / timerProvider.totalSeconds) 
+              : 1.0;
+              
+          // Only restart the animation if something significant changed
+          if (timerProvider.isRunning && !timerProvider.isCompleted &&
+              (!_progressController.isAnimating || 
+               _progressController.value != elapsedFraction)) {
+            
+            _progressController.duration = Duration(seconds: timerProvider.remainingSeconds);
+            _progressController.value = elapsedFraction;
+            
+            if (timerProvider.remainingSeconds > 0) {
+              _progressController.animateTo(
+                1.0,
+                duration: Duration(seconds: timerProvider.remainingSeconds),
+                curve: Curves.linear,
+              );
+            }
+          } else if (!timerProvider.isRunning && _progressController.isAnimating) {
+            // Pause the animation if the timer is paused
+            _progressController.stop();
+          }
           
-          // Second try: using a built-in sound
-          // This uses a simple beep sound that's more likely to work
-          final player = AudioPlayer();
-          _audioPlayer = player;
+          // Handle completed state animations
+          if (timerProvider.isCompleted && !_completedPulseController.isAnimating) {
+            _completedPulseController.repeat(reverse: true);
+          } else if (!timerProvider.isCompleted && _completedPulseController.isAnimating) {
+            _completedPulseController.reset();
+          }
           
-          // On Android this will use the default system alarm sound
-          await player.play(AssetSource('sounds/alarm.mp3'), volume: 1.0);
-          await player.setReleaseMode(ReleaseMode.loop);
-          
-          // If all else fails, we'll still have the visual indication
-        }
-      }
-    } catch (e) {
-      debugPrint('Error playing alarm sound: $e');
-      // Continue with just visual feedback
-    }
-  }
-  
-  // Fallback sound method when audio file isn't available
-  void _fallbackSound() {
-    // - SystemSound.play(SystemSoundType.alert) on iOS
-    // - Vibration.vibrate() with a vibration package
-    debugPrint('Using fallback alarm indicator (visual only)');
-  }
-  
-  // Start negative timer counting
-  void _startNegativeTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_isCompleted && _isRunning) {
-        setState(() {
-          _remainingSeconds--;
-        });
-      } else {
-        timer.cancel();
-      }
-    });
-  }
-  
-  // Snooze the timer
-  void _snoozeTimer() {
-    debugPrint('Snooze button pressed');
-    
-    // Stop alarm
-    try {
-      _audioPlayer?.stop();
-    } catch (e) {
-      debugPrint('Error stopping audio: $e');
-    }
-    
-    // Reset timer state
-    setState(() {
-      _isCompleted = false;
-      _isRunning = false;
-      _remainingSeconds = _totalSeconds;
-    });
-    
-    // Stop completion animation
-    _completedPulseController.stop();
-    _completedPulseController.reset();
-    
-    // Reset progress controller
-    _progressController.reset();
-    
-    // Cancel negative timer
-    _timer?.cancel();
-  }
-  
-  // Start or pause the timer
-  void _toggleTimer() {
-    if (_isCompleted) {
-      _snoozeTimer(); // If completed, snooze on play/pause button press
-      return;
-    }
-    
-    if (_isRunning) {
-      _pauseTimer();
-    } else {
-      _startTimer();
-    }
-  }
-  
-  // Start the timer
-  void _startTimer() {
-    setState(() {
-      _isRunning = true;
-    });
-    
-    // Calculate progress controller duration based on remaining time
-    _progressController.duration = Duration(seconds: _remainingSeconds);
-    
-    // Set the controller to the correct starting position
-    final elapsedFraction = 1 - (_remainingSeconds / _totalSeconds);
-    _progressController.value = elapsedFraction;
-    
-    // Start the animation
-    _progressController.animateTo(
-      1.0,
-      duration: Duration(seconds: _remainingSeconds),
-      curve: Curves.linear,
+          return Column(
+            children: [
+              const Spacer(flex: 1),
+              // Main timer display
+              Expanded(
+                flex: 5,
+                child: Center(
+                  child: _buildTimerDisplay(timerProvider),
+                ),
+              ),
+              // Timer controls
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    children: [
+                      // Main row of controls
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          // Left button: -1:00 or Cancel
+                          timerProvider.isPickerMode
+                            ? ElevatedButton(
+                                onPressed: () {
+                                  timerProvider.togglePickerMode();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF333333),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(50),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                                child: const Text(
+                                  "Cancel",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              )
+                            : ElevatedButton(
+                                onPressed: timerProvider.isCompleted ? null : () => timerProvider.adjustTime(-60),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF333333),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(50),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                                child: const Text(
+                                  "- 1:00",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                          // Middle button: Play/Pause or Set
+                          timerProvider.isPickerMode
+                            ? AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                width: 65,
+                                height: 65,
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.green.withOpacity(0.3),
+                                      blurRadius: 12,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  onPressed: () {
+                                    timerProvider.togglePickerMode();
+                                  },
+                                  icon: const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                ),
+                              )
+                            : AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                width: 65,
+                                height: 65,
+                                decoration: BoxDecoration(
+                                  color: timerProvider.isCompleted ? Colors.blue : Colors.red,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (timerProvider.isCompleted ? Colors.blue : Colors.red).withOpacity(0.3),
+                                      blurRadius: timerProvider.isRunning ? 12 : 0,
+                                      spreadRadius: timerProvider.isRunning ? 2 : 0,
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  onPressed: () => timerProvider.toggleTimer(),
+                                  icon: Icon(
+                                    timerProvider.isCompleted ? Icons.stop : (timerProvider.isRunning ? Icons.pause : Icons.play_arrow),
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                          // Right button: +1:00 or Edit
+                          timerProvider.isPickerMode
+                            ? const SizedBox(width: 90) // Placeholder for symmetry
+                            : !timerProvider.isCompleted
+                              ? ElevatedButton(
+                                  onPressed: () => timerProvider.adjustTime(60),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF333333),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(50),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                  child: const Text(
+                                    "+ 1:00",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                )
+                              : ElevatedButton(
+                                  onPressed: timerProvider.snoozeTimer,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF333333),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(50),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                  child: const Text(
+                                    "Snooze",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(flex: 1),
+            ],
+          );
+        },
+      ),
     );
   }
   
-  // Pause the timer
-  void _pauseTimer() {
-    setState(() {
-      _isRunning = false;
-    });
-    _progressController.stop();
+  // Build the timer display widget
+  Widget _buildTimerDisplay(TimerProvider timerProvider) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        _progressController, 
+        _pulseAnimation, 
+        _completedPulseAnimation
+      ]),
+      builder: (context, child) {
+        // Calculate progress ratio
+        double progressRatio = _getProgressRatio(timerProvider);
+        
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // Draw circles first
+            CustomPaint(
+              size: const Size(320, 320), // Larger canvas for circles
+              painter: TimerPainter(
+                progress: progressRatio,
+                baseColor: const Color.fromARGB(255, 232, 228, 228),
+                progressColor: Colors.red,
+                dotCount: 64,
+                pulseAnimation: _pulseAnimation.value,
+                isRunning: timerProvider.isRunning,
+                dotRadius: 2.0,
+              ),
+            ),
+            // Then draw the white circle with time or picker
+            AnimatedScale(
+              scale: timerProvider.isCompleted ? _completedPulseAnimation.value : 1.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                width: 210,
+                height: 210,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: timerProvider.isCompleted ? Colors.red.withOpacity(0.9) : Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: timerProvider.isCompleted 
+                        ? Colors.red.withOpacity(0.5) 
+                        : Colors.white.withOpacity(0.1),
+                      blurRadius: timerProvider.isCompleted ? 16 : 8,
+                      spreadRadius: timerProvider.isCompleted ? 4 : 2,
+                    ),
+                  ],
+                ),
+                child: timerProvider.isPickerMode ? _buildInlineTimerPicker(timerProvider) : _buildTimeDisplay(timerProvider),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
   
-  // Reset the timer
-  void _resetTimer() {
-    setState(() {
-      _isRunning = false;
-      _remainingSeconds = _totalSeconds;
-    });
-    _progressController.reset();
+  // Calculate progress ratio for the timer
+  double _getProgressRatio(TimerProvider timerProvider) {
+    // Return full progress when completed or if original total is zero/negative
+    if (timerProvider.isCompleted || timerProvider.originalTotalSeconds <= 0) return 1.0;
+    
+    // Calculate elapsed seconds
+    final elapsedSeconds = timerProvider.originalTotalSeconds - timerProvider.remainingSeconds;
+    
+    // Ensure we don't exceed 1.0 (100%) and handle negative cases
+    return min(1.0, max(0.0, elapsedSeconds / max(1, timerProvider.originalTotalSeconds)));
   }
   
-  // Add or subtract time
-  void _adjustTime(int secondsToAdjust) {
-    final wasRunning = _isRunning;
-    
-    if (wasRunning) {
-      _pauseTimer();
-    }
-    
-    setState(() {
-      // If we're adjusting time, we need to update both total and remaining seconds
-      int newTotalSeconds = max(0, _totalSeconds + secondsToAdjust);
-      int newRemainingSeconds = _remainingSeconds + secondsToAdjust;
-      
-      // Check if the timer would go negative
-      if (newRemainingSeconds <= 0 && !_isCompleted) {
-        // Timer is hitting zero - trigger completion
-        _totalSeconds = max(1, newTotalSeconds); // Ensure total is not zero to avoid division by zero
-        _remainingSeconds = 0;
-        _originalTotalSeconds = _totalSeconds;
-        _onTimerComplete(); // This will handle starting the negative countdown
-      } else {
-        // Normal adjustment
-        _totalSeconds = newTotalSeconds;
-        _remainingSeconds = max(0, newRemainingSeconds);
-        _originalTotalSeconds = _totalSeconds;
-      }
-    });
-    
-    if (wasRunning && _remainingSeconds > 0) {
-      _startTimer();
-    }
+  // Build the time display widget
+  Widget _buildTimeDisplay(TimerProvider timerProvider) {
+    return GestureDetector(
+      onTap: () {
+        if (!timerProvider.isCompleted) {
+          timerProvider.togglePickerMode();
+        }
+      },
+      child: Center(
+        child: Text(
+          _formatTime(timerProvider.remainingSeconds),
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w300,
+            fontFamily: 'Roboto',
+            color: timerProvider.isCompleted ? Colors.white : Colors.black,
+          ),
+        ),
+      ),
+    );
   }
   
   // Format seconds to HH:MM:SS
@@ -301,55 +393,17 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
     }
   }
   
-  // Update CustomPaint based on original total and current progress
-  double get _progressRatio {
-    // Return full progress when completed or if original total is zero/negative
-    if (_isCompleted || _originalTotalSeconds <= 0) return 1.0;
-    
-    // Calculate elapsed seconds
-    final elapsedSeconds = _originalTotalSeconds - _remainingSeconds;
-    
-    // Ensure we don't exceed 1.0 (100%) and handle negative cases
-    return min(1.0, max(0.0, elapsedSeconds / max(1, _originalTotalSeconds)));
-  }
-  
-  // Toggle between timer and picker mode
-  void _togglePickerMode() {
-    if (_isCompleted) {
-      _snoozeTimer();
-    }
-    
-    debugPrint("Toggling picker mode, current mode: $_isPickerMode");
-    setState(() {
-      _isPickerMode = !_isPickerMode;
-      
-      if (!_isPickerMode) {
-        // User selected a time, update the timer
-        _totalSeconds = _pickerDuration.inSeconds;
-        _remainingSeconds = _totalSeconds;
-        _originalTotalSeconds = _totalSeconds; // Reset progress calculation base
-        
-        // Reset the timer
-        _progressController.reset();
-        
-        // If timer was running, restart with new duration
-        if (_isRunning) {
-          _pauseTimer();
-          _startTimer();
-        }
-      } else {
-        // User is entering picker mode, pause the timer
-        if (_isRunning) {
-          _pauseTimer();
-        }
-        
-        // Update picker with current timer value
-        _pickerDuration = Duration(seconds: _remainingSeconds);
-      }
-    });
+  // Build the inline timer picker that fits inside the circle (light theme)
+  Widget _buildInlineTimerPicker(TimerProvider timerProvider) {
+    return Center(
+      child: SizedBox(
+        width: 200,
+        height: 180,
+        child: _buildCustomTimerPicker(timerProvider, isInline: true),
+      ),
+    );
   }
 
-  // -----------------------------------------------------------------
   // Helpers to build custom three‑wheel timer picker with tight gaps
   Widget _buildPickerColumn({
     required List<String> values,
@@ -372,10 +426,10 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildCustomTimerPicker({required bool isInline}) {
-    final h = _pickerDuration.inHours.remainder(24);
-    final m = _pickerDuration.inMinutes.remainder(60);
-    final s = _pickerDuration.inSeconds.remainder(60);
+  Widget _buildCustomTimerPicker(TimerProvider timerProvider, {required bool isInline}) {
+    final h = timerProvider.pickerDuration.inHours.remainder(24);
+    final m = timerProvider.pickerDuration.inMinutes.remainder(60);
+    final s = timerProvider.pickerDuration.inSeconds.remainder(60);
 
     final textStyle = TextStyle(
       color: isInline ? Colors.black : Colors.white,
@@ -397,13 +451,11 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
             initial: h,
             isInline: isInline,
             onSelected: (index) {
-              setState(() {
-                _pickerDuration = Duration(
-                  hours: index,
-                  minutes: _pickerDuration.inMinutes.remainder(60),
-                  seconds: _pickerDuration.inSeconds.remainder(60),
-                );
-              });
+              timerProvider.updatePickerDuration(Duration(
+                hours: index,
+                minutes: timerProvider.pickerDuration.inMinutes.remainder(60),
+                seconds: timerProvider.pickerDuration.inSeconds.remainder(60),
+              ));
             },
           ),
           const SizedBox(width: 4),
@@ -413,13 +465,11 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
             initial: m,
             isInline: isInline,
             onSelected: (index) {
-              setState(() {
-                _pickerDuration = Duration(
-                  hours: _pickerDuration.inHours.remainder(24),
-                  minutes: index,
-                  seconds: _pickerDuration.inSeconds.remainder(60),
-                );
-              });
+              timerProvider.updatePickerDuration(Duration(
+                hours: timerProvider.pickerDuration.inHours.remainder(24),
+                minutes: index,
+                seconds: timerProvider.pickerDuration.inSeconds.remainder(60),
+              ));
             },
           ),
           const SizedBox(width: 4),
@@ -429,270 +479,14 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
             initial: s,
             isInline: isInline,
             onSelected: (index) {
-              setState(() {
-                _pickerDuration = Duration(
-                  hours: _pickerDuration.inHours.remainder(24),
-                  minutes: _pickerDuration.inMinutes.remainder(60),
-                  seconds: index,
-                );
-              });
+              timerProvider.updatePickerDuration(Duration(
+                hours: timerProvider.pickerDuration.inHours.remainder(24),
+                minutes: timerProvider.pickerDuration.inMinutes.remainder(60),
+                seconds: index,
+              ));
             },
           ),
         ],
-      ),
-    );
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Column(
-        children: [
-          const Spacer(flex: 1),
-          // Main timer display
-          Expanded(
-            flex: 5,
-            child: Center(
-              child: _buildTimerDisplay(),
-            ),
-          ),
-          // Timer controls
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                children: [
-                  // Main row of controls
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Left button: -1:00 or Cancel
-                      _isPickerMode
-                        ? ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _isPickerMode = false;
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF333333),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                            child: const Text(
-                              "Cancel",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          )
-                        : ElevatedButton(
-                            onPressed: _isCompleted ? null : () => _adjustTime(-60),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF333333),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                            child: const Text(
-                              "- 1:00",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                      // Middle button: Play/Pause or Set
-                      _isPickerMode
-                        ? AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: 65,
-                            height: 65,
-                            decoration: BoxDecoration(
-                              color: Colors.green,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.green.withOpacity(0.3),
-                                  blurRadius: 12,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _totalSeconds = _pickerDuration.inSeconds;
-                                  _remainingSeconds = _totalSeconds;
-                                  _originalTotalSeconds = _totalSeconds; // Update original total for progress calculation
-                                  _isPickerMode = false;
-                                  
-                                  // Reset the timer and progress
-                                  _progressController.reset();
-                                });
-                              },
-                              icon: const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 30,
-                              ),
-                              padding: EdgeInsets.zero,
-                            ),
-                          )
-                        : AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: 65,
-                            height: 65,
-                            decoration: BoxDecoration(
-                              color: _isCompleted ? Colors.blue : Colors.red,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: (_isCompleted ? Colors.blue : Colors.red).withOpacity(0.3),
-                                  blurRadius: _isRunning ? 12 : 0,
-                                  spreadRadius: _isRunning ? 2 : 0,
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              onPressed: _isCompleted ? _snoozeTimer : _toggleTimer,
-                              icon: Icon(
-                                _isCompleted ? Icons.stop : (_isRunning ? Icons.pause : Icons.play_arrow),
-                                color: Colors.white,
-                                size: 30,
-                              ),
-                              padding: EdgeInsets.zero,
-                            ),
-                          ),
-                      // Right button: +1:00 or Edit
-                      _isPickerMode
-                        ? const SizedBox(width: 90) // Placeholder for symmetry
-                        : !_isCompleted
-                          ? ElevatedButton(
-                              onPressed: () => _adjustTime(60),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF333333),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(50),
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              ),
-                              child: const Text(
-                                "+ 1:00",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            )
-                          : ElevatedButton(
-                              onPressed: _snoozeTimer,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF333333),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(50),
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              ),
-                              child: const Text(
-                                "Snooze",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Spacer(flex: 1),
-        ],
-      ),
-    );
-  }
-  
-  // Build the timer display widget
-  Widget _buildTimerDisplay() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([
-        _progressController, 
-        _pulseAnimation, 
-        _completedPulseAnimation
-      ]),
-      builder: (context, child) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Draw circles first
-            CustomPaint(
-              size: const Size(320, 320), // Larger canvas for circles
-              painter: TimerPainter(
-                progress: _progressRatio,
-                baseColor: const Color.fromARGB(255, 232, 228, 228),
-                progressColor: Colors.red,
-                dotCount: 64,
-                pulseAnimation: _pulseAnimation.value,
-                isRunning: _isRunning,
-                dotRadius: 2.0,
-              ),
-            ),
-            // Then draw the white circle with time or picker
-            AnimatedScale(
-              scale: _isCompleted ? _completedPulseAnimation.value : 1.0,
-              duration: const Duration(milliseconds: 300),
-              child: Container(
-                width: 210,
-                height: 210,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _isCompleted ? Colors.red.withOpacity(0.9) : Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: _isCompleted 
-                        ? Colors.red.withOpacity(0.5) 
-                        : Colors.white.withOpacity(0.1),
-                      blurRadius: _isCompleted ? 16 : 8,
-                      spreadRadius: _isCompleted ? 4 : 2,
-                    ),
-                  ],
-                ),
-                child: _isPickerMode ? _buildInlineTimerPicker() : _buildTimeDisplay(),
-              ),
-            ),
-            
-          ],
-        );
-      },
-    );
-  }
-  
-  // Build the time display widget
-  Widget _buildTimeDisplay() {
-    return GestureDetector(
-      onTap: () {
-        debugPrint("Time display tapped");
-        if (!_isCompleted) {
-          _togglePickerMode();
-        }
-      },
-      child: Center(
-        child: Text(
-          _formatTime(_remainingSeconds),
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.w300,
-            fontFamily: 'Roboto',
-            color: _isCompleted ? Colors.white : Colors.black,
-          ),
-        ),
-      ),
-    );
-  }
-  
-  // Build the inline timer picker that fits inside the circle (light theme)
-  Widget _buildInlineTimerPicker() {
-    return Center(
-      child: SizedBox(
-        width: 200,
-        height: 180,
-        child: _buildCustomTimerPicker(isInline: true),
       ),
     );
   }

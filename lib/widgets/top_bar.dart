@@ -28,7 +28,11 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: 4, 
+      vsync: this,
+      initialIndex: widget.selectedIndex,
+    );
     _tabController.addListener(() {
       if (widget.selectedIndex != _tabController.index) {
         widget.callback(_tabController.index);

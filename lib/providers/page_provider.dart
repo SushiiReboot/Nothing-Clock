@@ -6,7 +6,16 @@ class PageProvider with ChangeNotifier {
   int get selectedIndex => _selectedIndex;
 
   void setPage(int index) {
-    _selectedIndex = index;
-    notifyListeners(); // Notify listeners to rebuild UI
+    // Only update and notify if the index actually changed
+    if (_selectedIndex != index) {
+      _selectedIndex = index;
+      notifyListeners(); // Notify listeners to rebuild UI
+    }
   }
+  
+  // Direct navigation to specific pages
+  void goToClockPage() => setPage(0);
+  void goToAlarmsPage() => setPage(1);
+  void goToTimerPage() => setPage(2);
+  void goToStopwatchPage() => setPage(3);
 }
