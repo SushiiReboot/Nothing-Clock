@@ -14,7 +14,7 @@ import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 class AlarmsService {
 
   /// A cached list of alarms loaded from the local Hive box.
-  List<Alarm>? _cachedAlarams;
+  List<Alarm>? _cachedAlarms;
 
   static const MethodChannel _channel = MethodChannel('exactAlarmChannel');
 
@@ -56,13 +56,13 @@ class AlarmsService {
 
   /// Saves an [alarm] to the Hive box and updates the cached list of alarms.
   ///
-  /// After adding the alarm to the box, the method appends it to [_cachedAlarams]
+  /// After adding the alarm to the box, the method appends it to [_cachedAlarms]
   /// if it exists, and then triggers a reload of alarms.
   Future<void> saveAlarmData(Alarm alarm) async {
     final box = await Hive.openBox<Alarm>('alarms');
     await box.add(alarm); 
 
-    _cachedAlarams?.add(alarm);
+    _cachedAlarms?.add(alarm);
     loadAlarms();
   }
 
@@ -71,21 +71,21 @@ class AlarmsService {
   ///
   /// If no alarms are cached, returns 0.
   int getNumberOfAlarms() {
-    return _cachedAlarams?.length ?? 0;
+    return _cachedAlarms?.length ?? 0;
   }
 
   /// Loads alarms from the Hive box.
   ///
-  /// If the alarms are already cached in [_cachedAlarams], returns the cached list.
+  /// If the alarms are already cached in [_cachedAlarms], returns the cached list.
   /// Otherwise, opens the Hive box, caches the values, and returns the list.
   Future<List<Alarm>> loadAlarms() async {
-    if(_cachedAlarams != null) {
-      return _cachedAlarams!;
+    if(_cachedAlarms != null) {
+      return _cachedAlarms!;
     }
 
     final box = await Hive.openBox<Alarm>('alarms');
-    _cachedAlarams = box.values.toList();
-    return _cachedAlarams!;
+    _cachedAlarms = box.values.toList();
+    return _cachedAlarms!;
   }
 
 
@@ -93,6 +93,7 @@ class AlarmsService {
   ///
   /// Currently, this method only logs a message, but you can extend it
   /// to perform more complex operations when an alarm fires.
+  @pragma('vm:entry-point')
   static void alarmCallback() {
     // This code will run when the alarm triggers.
     debugPrint("Alarm triggered!");
@@ -111,7 +112,7 @@ class AlarmsService {
         if(targetWeekday != null) {
           final nextOccourance = _getNextOccurrence(alarm.time, targetWeekday);
           final int truncatedAlarmId = alarm.id & ((1 << 28) - 1);
-          final int id = (((truncatedAlarmId << 3) | (targetWeekday & 0x7)) & 0xFFFFFFFF);
+          final int id = (((truncatedAlarmId << 3) | (targetWeekday & 0x7)) & 0x7FFFFFFF);
 
           await AndroidAlarmManager.oneShotAt(nextOccourance, id, alarmCallback, exact: true, wakeup: true);
           debugPrint("Scheduled alarm for ${alarm.time} on ${nextOccourance.weekday}");
